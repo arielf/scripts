@@ -2,20 +2,20 @@
 
 A collection of random useful scripts - ariel faigon
 
-jh
+### jh
     Connect to a bastion host with 2FA, starts openvpn if not running
     calls autovpn to establish the openvpn tunnel, prompts user only
     when/if needed.
     Note: requires 'autovpn'
 
 
-autovpn
+### autovpn
     Expect script to establish tunnel to bastion host
     Note: requires 'expect'
 
 
-x
-xy (just a link to x, they are both the same program)
+### x
+### xy (just a link to x, they are both the same program)
     Handy plotting command line utilities.
     Note: requires 'cuts'
     
@@ -26,12 +26,12 @@ xy (just a link to x, they are both the same program)
        $ perldoc xy
 
 
-cuts
+### cuts
     Handy cut and paste of columns (more powerful than 'cut')
     See: https://arielf.github.io/cuts/
     
     
-T
+### T
     Handy bi-directional/smart universal time converter
     - If it sees a Unix time_t (integer) - will convert to date
       Example:
@@ -44,7 +44,7 @@ T
     Input flexible: Works on either command-line-args OR stdin
 
 
-sorted-count-with-pct
+### sorted-count-with-pct
     percentage and cumulative-percentage summary of a list of items (one per line)
 
     Usage example: summarize word frequency in /etc/passwd:
