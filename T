@@ -1,0 +1,30 @@
+#!/usr/bin/perl -w
+#
+# Smart/bi-directional/universal time converter
+#
+#   - If it sees a Unix time_t (integer) - will convert to date
+#     Example:
+#           $ T 1443526029
+#           Tue Sep 29 04:27:09 2015
+#
+#   - If it sees anything else - will convert to time_t
+#           $ T week ago
+#           1443381375
+#
+# Input flexible: Works on either command-line-args OR stdin
+#
+use strict;
+
+my $Arg = "@ARGV";
+
+# No command line args? - grab stdin:
+$Arg ||= <STDIN>;
+
+chomp $Arg;
+
+if ($Arg =~ /^\d+$/) {
+    print scalar localtime $Arg, "\n";
+} else {
+    system("date -d '$Arg' +%s");
+}
+

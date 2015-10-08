@@ -1,0 +1,24 @@
+#!/bin/sh
+
+sort "$@" | uniq -c | sort -n | perl -e '
+    my $Total = 0;
+    my @Counts = ();
+    my @Items = ();
+    while (<>) {
+	chomp;
+	my ($count, @items) = split(" ");
+        my $item = "@items";
+	push(@Counts, $count);
+	push(@Items, $item);
+	$Total += $count;
+    }
+    my $CumPct = 100.00;
+    for (my $i = 0; $i <= $#Counts; $i++) {
+	my $count = $Counts[$i];
+	my $item = $Items[$i];
+	my $pct = 100.0 * $count / $Total;
+	printf "%d\t%.2f%%\t%.2f%%\t%s\n", $count, $pct, $CumPct, $item;
+	$CumPct -= $pct;
+    }
+'
+
