@@ -8,7 +8,7 @@ A collection of random useful scripts - ariel faigon
     Note: requires 'cuts'
     
     x  plots a density chart of a uni-dimensional numeric vector
-    xy plots a scatter-plot of two numeric columns (x, y) coordinates
+    xy plots a scatter-plot of two numeric columns (x, y)
     
     Documentation (man page style) is included, to get it, run:
        $ perldoc xy
