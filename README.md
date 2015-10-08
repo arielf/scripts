@@ -2,18 +2,6 @@
 
 A collection of random useful scripts - ariel faigon
 
-### jh
-    Connect to a bastion host with 2FA, starts openvpn if not running
-    calls autovpn to establish the openvpn tunnel, prompts user only
-    when/if needed.
-    Note: requires 'autovpn'
-
-
-### autovpn
-    Expect script to establish tunnel to bastion host
-    Note: requires 'expect'
-
-
 ### x
 ### xy (just a link to x, they are both the same program)
     Handy plotting command line utilities.
