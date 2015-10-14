@@ -11,8 +11,15 @@ A collection of random useful scripts - ariel faigon
     xy plots a scatter-plot of two numeric columns (x, y)
     
     Documentation (man page style) is included, to get it, run:
-       $ perldoc xy
 
+       $ perldoc x
+
+    Note that 'xy' doesn't exist in this repository. You can
+    create it by simply running this command in a shell:
+
+        $ ln x xy
+
+    in the directory where 'x' resides.
 
 ### cuts
     Handy cut and paste of columns (more powerful than 'cut')
