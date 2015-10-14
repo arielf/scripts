@@ -2,6 +2,7 @@
 # vim: ts=4 sw=4 expandtab
 #
 # Density plot of a vector
+# Scatter-plot of a pair of parallel vectors
 # - Works on any file:column by calling 'cuts'
 #
 # -- ariel faigon - 2014-07
@@ -39,6 +40,13 @@ my %Params = (
     'v'         => 0,
     'xlim'      => '',
     'ylim'      => '',
+    #
+    # Options for kernel (used in 'x' density) are:
+    #   "gaussian", "rectangular", "triangular", "epanechnikov",
+    #   "biweight", "cosine" or "optcosine" 
+    # http://www.inside-r.org/r-doc/stats/density
+    #
+    'kernel'    => 'gaussian',
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
@@ -159,7 +167,8 @@ if (ncol(d) == 1) {
     }
 
     g <- ggplot(data=d, aes(x=d[[1]])) +
-        geom_density(fill='{fill}', alpha={alpha}, lwd={size}) +
+        geom_density(fill='{fill}', alpha={alpha}, lwd={size},
+                     kernel='{kernel}') +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
         xlab(x.lab) +
