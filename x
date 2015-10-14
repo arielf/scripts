@@ -2,7 +2,11 @@
 # vim: ts=4 sw=4 expandtab
 #
 # Density plot of a vector
+#   x:      http://docs.ggplot2.org/current/geom_density.html
+#
 # Scatter-plot of a pair of parallel vectors
+#   xy:     http://docs.ggplot2.org/current/geom_point.html
+#
 # - Works on any file:column by calling 'cuts'
 #
 # -- ariel faigon - 2014-07
@@ -24,22 +28,30 @@ my $Progname = basename($0);
 # Override from the command-line using:
 #       varname=newvalue
 #
+#
 my %Params = (
     # Add supported args as needed:
+
+    # -- Chart size and aspect ratio
     'width'     => 4,   # in inches?
     'ratio'     => 1,   # height vs width
+
+    # -- Text title and axis-labels
     'title'     => '',
     'xlab'      => 'X',
     'ylab'      => 'Y',
-    'shape'     => ($Progname eq 'x' ? 20 : 21),
+
+    # -- Aesthetics
+    'alpha'     => ($Progname eq 'x' ? 0.5 : 0.3),
     'color'     => ($Progname eq 'x' ? '#0000ff' : '#0055ff'),
     'fill'      => '#3377ff',
-    'alpha'     => ($Progname eq 'x' ? 0.5 : 0.3),
+    'shape'     => ($Progname eq 'x' ? 20 : 21),
     'size'      => ($Progname eq 'x' ? 0.5 : 0.7),
-    'display'   => 'gwenview',
-    'v'         => 0,
+
+    # -- Data clip boundaries
     'xlim'      => '',
     'ylim'      => '',
+
     #
     # Options for kernel (used in 'x' density) are:
     #   "gaussian", "rectangular", "triangular", "epanechnikov",
@@ -56,6 +68,12 @@ my %Params = (
     'n'         => 512, # number of equally spaced points at which
                         # the density is to be estimated.
                         # Use a power-of-2 (due to FFT algo used)
+
+    # -- External program to display images
+    'display'   => 'gwenview',
+
+    # -- Debug/verbose
+    'v'         => 0,
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
