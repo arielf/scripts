@@ -46,7 +46,8 @@ my %Params = (
     'color'     => ($Progname eq 'x' ? '#0000ff' : '#0055ff'),
     'fill'      => '#3377ff',
     'shape'     => ($Progname eq 'x' ? 20 : 21),
-    'size'      => ($Progname eq 'x' ? 0.5 : 0.7),
+    'size'      => ($Progname eq 'x' ? 0.3 : 0.7),
+    'linetype'  => 1,
 
     # -- Data clip boundaries
     'xlim'      => '',
@@ -196,6 +197,7 @@ if (ncol(d) == 1) {
     g <- ggplot(data=d, aes(x=d[[1]])) +
         geom_density(fill='{fill}', alpha={alpha}, lwd={size},
                      kernel='{kernel}',
+                     linetype={linetype},
                      adjust={adjust}, cut={cut}) +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
@@ -404,6 +406,12 @@ sub get_args {
                 # same thing so just be friendly to the user here
                 # and allow either one
                 $name = 'adjust';
+            } elsif ($name eq 'lt') {
+                # User friendliness
+                $name = 'linetype';
+            } elsif ($name eq 'lw') {
+                # User friendliness: line-width in 'x' density
+                $name = 'size';
             }
             $Params{$name} = $value;
         }
