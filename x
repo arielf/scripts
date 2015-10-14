@@ -424,10 +424,12 @@ __END__
 =head1 NAME
 
 x - plot density of a single data vector from file:column
+xy - scatter plot of two parallel vectors from file column1 column2
 
 =head1 SYNOPSIS
 
-x [Options] [Column_Specs]...
+x  [Options] [Column_Specs]...
+xy [Options] [Column_Specs]...
 
 Column_Specs:
 
@@ -452,16 +454,45 @@ x uses cuts for column extraction.  You may extract the data
 from any file:colum_no (argument) or stdin.
 
 =head1 OPTIONS
+
     -v              verbose (mostly for debugging)
     -o <chartfile>  write generated chart to <chartfile>
 
-    All other options & args are passed down to 'cuts' (see cuts)
-    to select data-columns.
+    Other options & args (not including VAR=VALUE form vars)
+    are passed down to 'cuts' (see cuts) to select data-columns.
+
+=head1 VAR=VALUE settings
+
+    You may pass more arguments of the form:
+
+        var=value
+
+     to modify the visuals (size, color, etc.)
+     These are passed to the R/ggplot APIs in an implementation dependent
+     manner. Defaults are:
+
+                v       0
+                size    0.5
+                xlim
+                ratio   1
+                width   4
+                ylim
+                display gwenview
+                ylab    Y
+                fill    #3377ff
+                alpha   0.5
+                shape   20
+                color   #0000ff
+                xlab    X
+                title
 
 =head1 EXAMPLES
 
  x file 3           Plot column 3 from file
  x file:3           Same as above
+
+ xy file 3 1        Plot columns 3 (on X axis) and 1 (on Y axis)
+                    from file as a scatter-plot
 
 =head1 AUTHOR
 
@@ -474,6 +505,9 @@ Optional personal configuration ~/.x.pl
 If this file exists, x will read it during startup allowing
 you override default parameters and variables.
 
+The config file is eval'ed in perl just after reading the options.
+The option -c disables reading of the config file.
+ 
 =head1 SEE ALSO
 
 cuts, R, ggplot2
