@@ -48,6 +48,11 @@ my %Params = (
     #
     'kernel'    => 'gaussian',
     'adjust'    => 1,   # bandwidth adjust, numeric multiplier on 'bw'
+    'cut'       => 3,   # by default, the values of from and to are
+                        # 'cut' bandwidths beyond the extremes of the data.
+                        # This allows the estimated density to drop to
+                        # approximately zero at the extremes.
+                        # pass 'cut=0' to completely disable
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
@@ -169,7 +174,7 @@ if (ncol(d) == 1) {
 
     g <- ggplot(data=d, aes(x=d[[1]])) +
         geom_density(fill='{fill}', alpha={alpha}, lwd={size},
-                     kernel='{kernel}', adjust={adjust}) +
+                     kernel='{kernel}', adjust={adjust}, cut={cut}) +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
         xlab(x.lab) +
