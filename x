@@ -53,6 +53,9 @@ my %Params = (
                         # This allows the estimated density to drop to
                         # approximately zero at the extremes.
                         # pass 'cut=0' to completely disable
+    'n'         => 512, # number of equally spaced points at which
+                        # the density is to be estimated.
+                        # Use a power-of-2 (due to FFT algo used)
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
@@ -174,7 +177,8 @@ if (ncol(d) == 1) {
 
     g <- ggplot(data=d, aes(x=d[[1]])) +
         geom_density(fill='{fill}', alpha={alpha}, lwd={size},
-                     kernel='{kernel}', adjust={adjust}, cut={cut}) +
+                     kernel='{kernel}',
+                     adjust={adjust}, cut={cut}) +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
         xlab(x.lab) +
@@ -376,6 +380,12 @@ sub get_args {
                 # So we need {xlim} to either have it all name=value
                 # or none
                 $value = "limits=$value";
+            }
+            if ($name =~ /^b(?:and)?w(?:idth)?$/) {
+                # bandwidth and adjust are two ways to change the
+                # same thing so just be friendly to the user here
+                # and allow either one
+                $name = 'adjust';
             }
             $Params{$name} = $value;
         }
