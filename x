@@ -47,6 +47,7 @@ my %Params = (
     # http://www.inside-r.org/r-doc/stats/density
     #
     'kernel'    => 'gaussian',
+    'give.Rkern' => 'FALSE',
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
@@ -168,7 +169,7 @@ if (ncol(d) == 1) {
 
     g <- ggplot(data=d, aes(x=d[[1]])) +
         geom_density(fill='{fill}', alpha={alpha}, lwd={size},
-                     kernel='{kernel}') +
+                     kernel='{kernel}', give.Rkern={give.Rkern}) +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
         xlab(x.lab) +
@@ -308,7 +309,7 @@ sub get_args {
             }
             next;
         }
-        if ($arg =~ /^(\w+)=(.+)$/) {
+        if ($arg =~ /^([\w.]+)=(.+)$/) {
             push(@ParamArgs, $arg);
             next;
         }
