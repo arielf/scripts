@@ -44,3 +44,19 @@ A collection of random useful scripts - ariel faigon
 
     Usage example: summarize word frequency in /etc/passwd:
     $ tr -cs 'A-Za-z' '\012' < /etc/passwd | sorted-count-with-pct
+
+### byte-entropy
+    Calculates entropy of a file (or string) object by byte values.
+
+    One pass over the file/string to summarize frequencies of each
+    byte value and count total bytes.
+
+    Another loop over the (non-zero) frequencies to calculate the entropy.
+
+    Very simple: doesn't try to do N-gram/context/language-detection,
+    Only considers char-frequencies within the object as independent
+    probabilities.
+
+    Result is always normalized to [0 .. 1] range.
+    1.0 means highest-randomness.
+
