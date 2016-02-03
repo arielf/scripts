@@ -63,7 +63,7 @@ def byte_entropy(object):
         object.close()
         fh.close()
 
-    entropy = 0
+    entropy = 0.0
 
     for count in counts:
         # If no bytes of this value were seen in the value,
@@ -71,8 +71,7 @@ def byte_entropy(object):
         if count == 0:
             continue
 
-        # p is the probability of seeing this byte in the file, as a
-        # floating-point number
+        # p is the probability of seeing this byte in the file,
         p = 1.0 * count / total_count
         entropy -= p * math.log(p, _UTF8_DISTINCT_VALUES)
 
