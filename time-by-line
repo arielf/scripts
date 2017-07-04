@@ -1,0 +1,64 @@
+#!/usr/bin/perl -w
+#
+# Given input, sorts all lines by the time it took them to appear
+# Useful for finding slowest lines/progress in a long process
+# which produces many lines.
+#
+
+use strict;
+use Time::HiRes qw/gettimeofday/;
+
+#
+# -- global vars
+#
+my %Duration = ();      # line -> time since previous line
+my $T0;
+
+sub time_since_last() {
+    my $t1 = gettimeofday;
+    my $t_diff = $t1 - $T0;
+    $T0 = $t1;
+    $t_diff;
+}
+
+sub summarize() {
+    for my $line (sort {$Duration{$a} <=> $Duration{$b}} keys %Duration) {
+        my $duration = $Duration{$line};
+        printf "%10.6f\t%s\n", $duration, $line;
+    }
+}
+
+sub input_line_loop() {
+    # main loop over input lines
+    while (<>) {
+        print;
+        chomp;
+        my $t_diff = time_since_last();
+        if (exists $Duration{$_}) {
+            print STDERR "Warning: duplicate line: $_\n";
+        }
+        $Duration{$_} = $t_diff;
+    }
+}
+
+sub init() {
+    if (@ARGV > 0) {
+        # Dual API:
+        #   If this script is used as a command prefix (like 'time' or
+        #   'nice', oblige, and read input from combined (STDOUT+STDERR)
+        #   of command postfix.
+        # print STDERR "Got args: (@ARGV): reading from it...\n";
+        open(STDIN, "bash -c '@ARGV' 2>&1 |");
+        @ARGV = ();
+    }
+
+    $T0 = gettimeofday;
+}
+
+#
+# -- main
+#
+init();
+input_line_loop();
+summarize();
+
