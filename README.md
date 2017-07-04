@@ -60,3 +60,33 @@ A collection of random useful scripts - ariel faigon
     Result is always normalized to [0 .. 1] range.
     1.0 means highest-randomness.
 
+### time-by-line
+    Time a sequence of commands (each output line is timed separately).
+
+    e.g. you have a test-suite, normally invoked as `make test`
+    with many sub-tests and we want to get the sub-tests sorted by the
+    time they took to run.
+
+    We run:
+        `time-by-line make test`
+
+    and get output like (trimmed for previty):
+```
+    [normal output comes first. And after everything completes:]
+
+    0.000006      test 42: OK
+    ...
+    0.149873      test 127: OK
+    0.241587      test 134: OK
+    0.602354      test 126: OK
+```
+    where the 1st column is number of seconds a line took to complete.
+    and the lines are sorted by the time the individual sub-tests
+    took to run.
+
+    Invocation is flexible. You can also use `time-by-line` in a pipe:
+```
+        make test | time-by-line
+```
+
+
