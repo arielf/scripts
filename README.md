@@ -63,12 +63,14 @@ A collection of random useful scripts - ariel faigon
 ### time-by-line
     Time a sequence of commands (each output line is timed separately).
 
-    e.g. you have a test-suite, normally invoked as `make test`
+    e.g. you have a test-suite, normally invoked as 'make test'
     with many sub-tests and we want to get the sub-tests sorted by the
     time they took to run.
 
     We run:
-        `time-by-line make test`
+```
+        time-by-line make test
+```
 
     and get output like (trimmed for previty):
 ```
@@ -84,7 +86,7 @@ A collection of random useful scripts - ariel faigon
     and the lines are sorted by the time the individual sub-tests
     took to run.
 
-    Invocation is flexible. You can also use `time-by-line` in a pipe:
+    Invocation is flexible. You can also use 'time-by-line' in a pipe:
 ```
         make test | time-by-line
 ```
