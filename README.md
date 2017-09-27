@@ -61,18 +61,16 @@ A collection of random useful scripts - ariel faigon
     1.0 means highest-randomness.
 
 ### time-by-line
-    Time a sequence of commands (each output line is timed separately).
+Time a sequence of commands (each output line is timed separately).
 
-    e.g. you have a test-suite, normally invoked as 'make test'
-    with many sub-tests and we want to get the sub-tests sorted by the
-    time they took to run.
+e.g. you have a test-suite, normally invoked as 'make test' with many sub-tests and we want to get the sub-tests sorted by the time they took to run.
 
-    We run:
+Example:
 ```
-        time-by-line make test
+    time-by-line make test
 ```
 
-    and get output like (trimmed for previty):
+The output (trimmed for brevity):
 ```
     [normal output comes first. And after everything completes:]
 
@@ -82,13 +80,27 @@ A collection of random useful scripts - ariel faigon
     0.241587      test 134: OK
     0.602354      test 126: OK
 ```
-    where the 1st column is number of seconds a line took to complete.
-    and the lines are sorted by the time the individual sub-tests
-    took to run.
+where the 1st column is number of seconds a line took to complete, and the lines are sorted by the time the individual sub-tests took to run.
 
-    Invocation is flexible. You can also use 'time-by-line' in a pipe:
+Invocation is flexible. You can also use 'time-by-line' in a pipe:
+
 ```
-        make test | time-by-line
+    make test |& time-by-line
 ```
 
+There are 2 different ways to attribute times to lines:
+
+* Attribute time to 1st line in a sequence (starting line)
+* Attribute time to 2nd line in a sequence (ending line)
+
+The default used by `time-by-line` is to attribute times to the ending-line
+
+To change the default, simply pass `-` or `--` as the 1st argument to `time-by-line`:
+```
+    # Will attribute each time-slot duration to its 1st line:
+    time-by-line -- make test
+
+    # ditto:
+    make test |& time-by-line --
+```
 

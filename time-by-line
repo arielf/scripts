@@ -4,7 +4,16 @@
 # Useful for finding slowest lines/progress in a long process
 # which produces many lines.
 #
-
+# Note: some outputs refer to what's about to run (before it starts)
+# while others print summary at end (after they finish), so we need
+# two different modes to attribute each inter-line duration:
+#   1) attribute the time to the -- starting-line --
+#   2) attribute the time to the -- ending-line --
+#
+# By default: time between two lines will be attributed to the _ending_ line.
+# To switch from ending-line timing to starting-line timing:
+#   pass '-' or '--' as the 1st arg to this program.
+#
 use strict;
 use Time::HiRes qw/gettimeofday/;
 
@@ -13,6 +22,14 @@ use Time::HiRes qw/gettimeofday/;
 #
 my %Duration = ();      # line -> time since previous line
 my $T0;
+
+#
+# Whether to assign the time to ending-line or starting-line
+# By default, we assume a time-measurement belongs to its ending-line
+#
+my $StartingLine = 0;
+
+sub mymax($$) { $_[$_[0] < $_[1]] }
 
 sub time_since_last() {
     my $t1 = gettimeofday;
@@ -24,20 +41,33 @@ sub time_since_last() {
 sub summarize() {
     for my $line (sort {$Duration{$a} <=> $Duration{$b}} keys %Duration) {
         my $duration = $Duration{$line};
-        printf "%10.6f\t%s\n", $duration, $line;
+        printf "%12.6f\t%s\n", $duration, $line;
     }
 }
 
 sub input_line_loop() {
     # main loop over input lines
+    my $prev_line = 'TIME-TILL-FIRST-LINE';
+    my $t_diff;
     while (<STDIN>) {
         print;
         chomp;
-        my $t_diff = time_since_last();
-        if ($_ and exists $Duration{$_}) {
-            print STDERR "$0: warning: duplicate line (last time wins): $_\n";
+        my $line_to_time = $StartingLine ? $prev_line : $_;
+        $t_diff = time_since_last();
+        if (exists $Duration{$line_to_time}) {
+            printf STDERR
+                "%s: warning: duplicate line (slowest time wins): %s\n",
+                    $0, $line_to_time;
+            $t_diff = mymax($t_diff, $Duration{$line_to_time});
         }
-        $Duration{$_} = $t_diff;
+        $Duration{$line_to_time} = $t_diff;
+        $prev_line = $_;
+    }
+    if ($StartingLine) {
+        # when $StartingLine is in effect
+        # we need to assign time to last line (till exit) as well
+        $t_diff = time_since_last();
+        $Duration{$prev_line} = $t_diff;
     }
 }
 
@@ -45,13 +75,21 @@ sub init() {
     # Force $0 to basename($0) for messages/errors
     $0 =~ s{.*/}{};
 
+    #
+    # whether to switch to starting-line timing
+    #
+    if ($ARGV[0] && $ARGV[0] =~ /^-+$/) {
+        shift @ARGV;
+        $StartingLine = 1;
+    }
+
     if (@ARGV > 0) {
         # Dual API:
         #   If this script is used as a command prefix (like 'time' or
         #   'nice', oblige, and read input from combined (STDOUT+STDERR)
         #   of command postfix.
         # print STDERR "Got args: (@ARGV): reading from it...\n";
-        open(STDIN, "bash -c '@ARGV' 2>&1 |");
+        open(STDIN, "bash -c '2>&1 @ARGV' |");
         @ARGV = ();
     }
 
