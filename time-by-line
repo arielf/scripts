@@ -30,18 +30,21 @@ sub summarize() {
 
 sub input_line_loop() {
     # main loop over input lines
-    while (<>) {
+    while (<STDIN>) {
         print;
         chomp;
         my $t_diff = time_since_last();
-        if (exists $Duration{$_}) {
-            print STDERR "Warning: duplicate line: $_\n";
+        if ($_ and exists $Duration{$_}) {
+            print STDERR "$0: warning: duplicate line (last time wins): $_\n";
         }
         $Duration{$_} = $t_diff;
     }
 }
 
 sub init() {
+    # Force $0 to basename($0) for messages/errors
+    $0 =~ s{.*/}{};
+
     if (@ARGV > 0) {
         # Dual API:
         #   If this script is used as a command prefix (like 'time' or
