@@ -43,8 +43,7 @@ A collection of random useful scripts - ariel faigon
 
         xyz volcano.csv X Y Z cmap=jet zres=20
 
-    The data file volcano.csv is included here to demonstrate
-    3D data visualization (with xyz)
+    The data file volcano.csv is included here for convenience.
 
 ![volcano contour rendering](volcano-contour.png  "volcano contour rendering by the xyz utility")
  
