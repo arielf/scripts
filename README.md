@@ -25,7 +25,42 @@ A collection of random useful scripts - ariel faigon
     Handy cut and paste of columns (more powerful than 'cut')
     See: https://arielf.github.io/cuts/
     
-    
+### xyz
+    Python (matplotlib) script to quickly plot 3D numeric data
+    from the command-line.  Needs a *.tsv or *.csv input file,
+    3 names (or 0-based indices) of columns to select from the file,
+    and many options to control the plot.
+
+    The default is to plot a contour map (like a topographical
+    view of the Z dimension vs the X & Y dimensions).
+
+    Emphasis on friendliness, run without arguments for usage.
+    For parameter prefix matches and regexp/abbreviations are
+    supported.  For example a color-map parameter, can be
+    specified as any of: colormap, cmap, cm  etc.
+
+    Example:
+
+        xyz volcano.csv X Y Z cmap=jet zres=20
+
+    The data file volcano.csv is included here to demonstrate
+    3D data visualization (with xyz)
+
+![volcano contour rendering](volcano-contour.png  "volcano contour rendering by the xyz utility")
+ 
+    The following names can be symlinked to the same (xyz) script.
+    * If called as 'xyzb' will produce a bubble chart
+    * If called as 'xyzs' will produce a scatter plot
+    * If called as 'xyzp' will produce a polar plot (Y dim mapped to angle)
+
+### colidx
+
+    Print indices of column-names from a csv/tsv file with a header
+
+    Example:
+
+        colidx volcano.csv
+ 
 ### T
     Handy bi-directional/smart universal time converter
     - If it sees a Unix time_t (integer) - will convert to date
