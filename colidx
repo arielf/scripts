@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# Show integer indexes of column names in CSV files
+#
+err() {
+    echo "$@" 1>&2
+}
+
+die() {
+    err "$@"
+    exit 1
+}
+
+usage() {
+    case "$1" in
+        ('') : ;;
+        (*) err "$@" ;;
+    esac
+    prog=$(basename $0)
+    die "Usage:
+
+            $prog CSVFileName
+            $prog PrefixMatch CSVFileName
+
+    1st form: print ALL columns and their indexes
+    2nd form: print prefix-matching columns and their indexes
+"
+}
+
+case $# in
+    (2) : good: column_name file_name
+        ColName="$1"
+        FileName="$2"
+        ;;
+    (1) : good file_name
+        FileName="$1"
+        ColName='?'
+        ;;
+    (*) usage ;;
+esac
+
+if [[ ! -e "$FileName" ]]; then
+    usage "FileName: $FileName: no such file or directory!"
+fi
+
+# Allow tab or comma separators
+isep=',	'
+howmany=$(head -1 "$FileName" |tr "$isep" '\012' |wc -l)
+fromend=$((-$howmany))
+lineno=0
+head -1 "$FileName" | tr "$isep" '\012' | while read line; do
+    case "$line" in
+        ($ColName*) echo -e "$lineno\t$fromend\t$line" ;;
+    esac
+    lineno=$(($lineno + 1))
+    fromend=$(($fromend + 1))
+done
+
+
+
+

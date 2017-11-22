@@ -1,0 +1,504 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim: ts=4 sw=4 expandtab
+"""
+    xyz
+    ~~~
+
+    Plot a (X, Y, Z) heatmap, polar, scatter, or bubble chart from a dataset.
+
+    Parameters:
+    - Dataset_file (csv)
+    - X-axis column (input feature) name - mapped to X-axis
+    - Y-axis column (input feature) name - mapped to Y-axis
+    - Z-axis column (target feature) name - mapped to Z-axis (e.g color)
+
+    Optional parameters/modifiers:
+        name=value
+    These will be passed to the plotting func and if supported,
+    will modify the appearance of the graph.
+
+    Can be called with a different name (e.g. via a link/symlink)
+        xyz:  will generate a contoured heat-map (default)
+        xyzs: will generate a scatter-plot only (no heatmap)
+        xyzb: will generate a bubble-chart (Z is bubble-size & color)
+        xyzp: polar projection: X-dimension is theta
+
+    Call xyz without parameters to get a usage() message.
+"""
+
+import sys
+import os
+import re
+
+import pandas as pd
+import numpy as np
+
+from scipy.ndimage.filters import gaussian_filter
+import scipy
+
+from matplotlib.mlab import griddata
+import matplotlib.pyplot as plt
+
+from pprint import pformat
+
+ARGV0 = os.path.basename(sys.argv[0])
+
+# Debug level: d=<int> on command line
+DBG = 0
+
+#
+# A better dark red to dark blue (trimmed rainbow-spectrum)
+# cdict with yellow centered exactly at 0 and around it
+# (note: rgb->bgr order is inverted)
+ariel_cdict = {
+    'blue': [[0.0, None, 0.0], [0.25, 0.0, 0.0],
+             [0.48, 0.0, 0.0], [0.52, 0.0, 0.2],
+             [0.75, 0.6666666666666666, 0.8], [1.0, 1.0, None]],
+    'green': [[0.0, None, 0.0], [0.25, 0.0, 0.2],
+              # This is the yellow range:
+              [0.48, 0.9333333333333333, 1.0], [0.52, 1.0, 1.0],
+              [0.75, 0.8666666666666667, 0.8666666666666667],
+              [1.0, 0.0, None]],
+    'red':  [[0.0, None, 0.6666666666666666], [0.25, 1.0, 1.0],
+             [0.48, 1.0, 1.0], [0.52, 1.0, 0.8666666666666667],
+             [0.75, 0.0, 0.0], [1.0, 0.0, None]]
+}
+plt.register_cmap(name='ariel', data=ariel_cdict)
+plt.register_cmap(name='a', data=ariel_cdict)   # short alias
+
+MyFont = {
+    'family':'sans-serif',
+    'sans-serif': ['Bitstream Vera Sans', 'FreeSans', 'Helvetica'],
+    # 'weight':'bold'
+}
+
+def err(msg):
+    sys.stderr.write(msg)
+    sys.stderr.flush()
+
+def myusage(msg=None):
+    """Print usage and exit"""
+    if msg:
+        err(msg)
+
+    err("Usage: %s[sb] [param=value ...] data_file x_name y_name z_name\n\n"
+        "    data_file can be *.csv or *tsv\n"
+        "    mode is determined by argv[0]:\n"
+        "        xyz:  3D heatmap w/ countours (default)\n"
+        "        xyzs: scatter-plot\n"
+        "        xyzb: bubble-plot (like scatter, but bigger dots)\n"
+        "        xyzp: polar projection (X-dimension is angle (theta))\n"
+        "    x_name y_name z_name can be numeric (0-based indices)\n"
+        "    Supported params:\n"
+        "\ttitle=<string>       # Set chart title\n"
+        "\tcmap=<string>        # Colormap/colorscheme name (e.g. 'jet_r')\n\n"
+        "\tstyle=<string>       # Style name (e.g. 'seaborn', 'ggplot')\n\n"
+        "\t[xyz]min=<float>     # [XYZ]-axis bottom clipping/trimming\n"
+        "\t[xyz]max=<float>     # [XYZ]-axis top clipping/trimming\n"
+        "\t[xyz]res=<int>       # [XYZ]-axis resolution\n"
+        "\t[xyz]blur=<float>    # [XYZ]-axis gaussian blur\n"
+        "\t[xyz]cs=<int>        # [XYZ]-axis PDF -> CDF via cumsum()\n"
+        "\t[xy]scale=<string>   # [XY]-axis scale: linear|log|symlog\n"
+        "\tds=<float>           # Scatter-plot dot size multiplier\n"
+        "\talpha=<float>        # Alpha transparency for dots/bubbles\n"
+        "\tgrid=<float>         # Add grid with specified <float> alpha\n"
+        "\tgriddata=0           # Do NOT gridify (interpolate) the data\n"
+        "\tcl=<float>           # Add contour-lines (0 to disable)\n"
+        "\tedgecolor=<color>    # Add edge to scatter-points/bubbles\n"
+        "\tlinewidth=<int>      # Set linewidth in scatter-points/bubbles\n"
+        "\tdbg=<int>            # Set debug level\n"
+        "\thelp=[sc]            # Help on avail styles & color schemes\n"
+            % ARGV0
+    )
+    sys.exit(1)
+
+
+def dbg(level, msg):
+    """Print message to stderr iff debug level is at least the 1st arg"""
+    if int(DBG) >= int(level):
+        err(msg)
+
+def myget(dat, pat, default_value):
+    """
+    User-friendly get-value from kw-dict (user supplied name=value
+    on command line), with flexible regex/prefix matching
+    """
+    if pat in dat:
+        # simplest case, exact match, done
+        return dat[pat]
+
+    # No exact match, try regex/prefix matches
+    match_keys = [k for k in dat if re.match(pat, k)]
+    if len(match_keys) >= 1:
+        if len(match_keys) > 1:
+            err("multiple matches for '%s': %s (using 1st match)\n" %
+                (pat, match_keys))
+        return dat[match_keys[0]]
+
+    # nothing worked, use the default value
+    return default_value
+
+
+def data2df(datafile, xname, yname, zname, kw):
+    """
+    Load the data from a file into memory
+    Select only the wanted/needed columns
+    Return as DataFrame
+    """
+    dbg(1, "| data2df: read_csv(%s)..." % datafile)
+    df = pd.read_csv(datafile, sep='[\t,]', engine='python')
+    dbg(1, " done\n")
+
+    # X, Y, X columns: by either by name or by integer index
+    if re.match('^\d+$', xname):
+        x = df.ix[:, int(xname)]
+    else:
+        x = df[xname]
+
+    if re.match('^\d+$', yname):
+        y = df.ix[:, int(yname)]
+    else:
+        y = df[yname]
+
+    if re.match('^\d+$', zname):
+        z = df.ix[:, int(zname)]
+    else:
+        z = df[zname]
+
+    df = pd.DataFrame({xname:x, yname:y, zname:z})
+
+    # Axis range trimming from command-line: [xyz]{min,max}
+    val = myget(kw, '^(?:xm?i?n)$', None)
+    if val != None:
+        xmin = float(val)
+    else:
+        xmin = df[xname].min()
+
+    val = myget(kw, '^(?:xm?a?x)$', None)
+    if val != None:
+        xmax = float(val)
+    else:
+        xmax = df[xname].max()
+
+    val = myget(kw, '^(?:ym?i?n)$', None)
+    if val != None:
+        ymin = float(val)
+    else:
+        ymin = df[yname].min()
+
+    val = myget(kw, '^(?:ym?a?x)$', None)
+    if val != None:
+        ymax = float(val)
+    else:
+        ymax = df[yname].max()
+
+    val = myget(kw, '^(?:zm?i?n)$', None)
+    if val != None:
+        zmin = float(val)
+    else:
+        zmin = df[zname].min()
+
+    val = myget(kw, '^(?:zm?a?x)$', None)
+    if val != None:
+        zmax = float(val)
+    else:
+        zmax = df[zname].max()
+
+    df = df.loc[
+            (xmin <= df[xname]) & (df[xname] <= xmax) &
+            (ymin <= df[yname]) & (df[yname] <= ymax) &
+            (zmin <= df[zname]) & (df[zname] <= zmax)
+    ]
+    return df
+
+
+def xyz(kw):
+    """
+    Plot a heatmap/bubble-chart/scatterplot
+    of column name Z vs column names (X, Y)
+    """
+    datafile = kw.get('datafile')
+    xname = kw.get('xname')
+    yname = kw.get('yname')
+    zname = kw.get('zname')
+
+    if not all((datafile, xname, yname, zname)):
+        myusage()
+
+    dbg(1, "+--- xyz: param init...")
+
+    global DBG
+    DBG = int(float(myget(kw, '(?:debug|db)', 0)))
+
+    mode = 'h'          # default: heatmap (gridded & interpolated)
+    if 'b' in ARGV0:
+        mode = 'b'      # bubble-chart
+    elif 's' in ARGV0:
+        mode = 's'      # scatter plot
+    elif 'p' in ARGV0:
+        mode = 'p'      # polar projection (X is theta)
+
+    # good style are:
+    #   ggplot fast dark_background
+    #   seaborn-notebook
+    #   seaborn-paper
+    #   seaborn-bright
+    #   seaborn-darkgrid
+    wanted_style = myget(kw, '(?:style|st)', 'seaborn-notebook')
+    plt.style.use(wanted_style)
+
+    plt.rc('font', **MyFont)
+    plt.rc('grid', c='0.5', ls='-', lw=0.5)     # midgray, line-width
+    plt.rc('lines', c='0.5', lw=0.5, aa=True)   # midgray, line-width
+
+    # cmapstr = myget(kw, '(?:col|cm)', 'bwr_r')
+    cmapstr = myget(kw, '(?:col|cm)', 'ariel')
+    cmap = plt.cm.get_cmap(cmapstr)
+
+    # grid: whether to add a grid (alpha)
+    grid = float(myget(kw, '(?:gr(?:id)?$)', 0.33))
+
+    # gd (griddata): whether to linearly 'grid' (interpolate) the data
+    gd = int(float(myget(kw, '(?:g(ri?d?)?d)', 1)))
+
+    # Whether to plot contour lines in contour-plot (alpha)
+    contourlines = float(myget(kw, '^(?:cl|con)', 0.5))
+
+    default_title = 'f(%s, %s) -> %s' % (xname, yname, zname)
+    title = myget(kw, '^(?:ti)', default_title)
+
+    xres = int(float(myget(kw, 'xr', 60)))
+    yres = int(float(myget(kw, 'yr', 60)))
+    zres = int(float(myget(kw, 'zr', 50)))
+
+    # Transparency of bubbles
+    alpha = float(myget(kw, 'al', 0.5))
+
+    # PDF => CDF via cumsum
+    xcs = int(float(myget(kw, 'xc', 0)))
+    ycs = int(float(myget(kw, 'yc', 0)))
+    zcs = int(float(myget(kw, 'zc', 0)))
+
+    # Apply a gaussian-blur (gaussian filter) w/ sigma on any dimension
+    xblur = float(myget(kw, '^(?:xg?[bf])', 0.0))
+    yblur = float(myget(kw, '^(?:yg?[bf])', 0.0))
+    zblur = float(myget(kw, '^(?:zg?[bf])', 0.0))
+
+    xscale = myget(kw, 'xs', 'linear')
+    yscale = myget(kw, 'ys', 'linear')
+
+    # Load the data into a DataFrame
+    df = data2df(datafile, xname, yname, zname, kw)
+
+    x = df[xname]
+    y = df[yname]
+    z = df[zname]
+
+    # find limits min/max on each dimension
+    xmin = x.min()
+    xmax = x.max()
+    ymin = y.min()
+    ymax = y.max()
+    zmin = z.min()
+    zmax = z.max()
+
+    if xcs:
+        x = np.cumsum(x)
+        xname = 'cumsum(%s)' % xname
+    if ycs:
+        y = np.cumsum(y)
+        yname = 'cumsum(%s)' % yname
+    if zcs:
+        z = np.cumsum(z)
+        zname = 'cumsum(%s)' % zname
+
+    dbg(3, "| xyz: [xyz]blur=(%s,%s,%s): blur x,y,z..." %
+            (xblur, yblur, zblur))
+    if xblur:
+        x = gaussian_filter(x, sigma=xblur, order=0)
+    if yblur:
+        y = gaussian_filter(y, sigma=yblur, order=0)
+    if zblur:
+        z = gaussian_filter(z, sigma=zblur, order=0)
+    dbg(3, " done\n")
+
+    dbg(3, "| xyz: (xscale=%s yscale=%s): scale x,y..." % (xscale, yscale))
+    if xscale != 'linear':
+        plt.xscale(xscale)
+        xname = '%s (%s scale)' % (xname, xscale)
+    if yscale != 'linear':
+        plt.yscale(yscale)
+        yname = '%s (%s scale)' % (yname, yscale)
+    dbg(3, " done\n")
+
+    # point/dot size multiplier (for scatter-plot)
+    default_dotsize = {
+        'h': 0,
+        's': 4.0,
+        'b': 10.0,
+        'p': 2.0,
+    }
+    dotsize = float(myget(kw, '(?:(?:dot|point|d|p)s)', default_dotsize[mode]))
+
+    dbg(1, "Data Ranges: X:[%s %s] Y:[%s %s]  Z:[%s %s]\n" %
+                (xmin, xmax, ymin, ymax, zmin, zmax))
+    dbg(1, "Data resolutions: X:%s Y:%s Z:%s\n" % (xres, yres, zres))
+
+
+    # define grid.
+    xi = np.linspace(xmin, xmax, xres)
+    yi = np.linspace(ymin, ymax, yres)
+
+    dbg(2, "xi vector (shape=%s) after linspace: %s\n" % (xi.shape, xi))
+    dbg(2, "yi vector (shape=%s) after linspace: %s\n" % (yi.shape, yi))
+
+    # grid the data.
+    dbg(3, "| xyz: gd=%s: grid x,y -> zi..." % gd)
+    if gd:
+        # matplotlib.mlab.griddata  way:
+        xi, yi = np.meshgrid(xi, yi)
+        # rbf = scipy.interpolate.Rbf(x, y, z, function='linear')
+        zi = griddata(x, y, z, xi, yi, interp='linear')
+    else:
+        # scipy.interpolate.griddata  way
+        xi, yi = np.meshgrid(xi, yi)
+        zi = scipy.interpolate.griddata(
+            (x, y), z, (xi[None,:], yi[:,None]), method='linear')
+    dbg(3, " done\n")
+
+    dbg(2, "Z vector (shape=%s) after gridding: %s\n" % (zi.shape, zi))
+
+    dbg(3, "| xyz: contour...")
+    if mode == 'p':
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='polar')
+        # ax.set_rorigin(-2.5)                       # hollow center
+        # ax.set_theta_zero_location('W', offset=10) # angular rotation
+    elif mode == 'h':
+        # Color fill between contours
+        if contourlines:
+            plt.contour(xi, yi, zi, zres, colors='k',
+                        alpha=contourlines, extend='neither')
+        plt.contourf(xi, yi, zi, zres, cmap=cmap)
+        # , vmin=zmin, vmax=zmax)
+        # Contour lines
+    dbg(3, " done\n")
+
+    if grid:
+        plt.grid(alpha=grid)
+
+    # plot data points.
+    dotareas = 0.0
+    if dotsize > 0:
+        dotareas = np.pi * (1.0 + abs(z)*dotsize)**2.0
+
+    # scatter/bubble point edge color
+    ec = myget(kw, '^(?:e(?:dge)?c)', None)
+    elw = float(myget(kw, '^(?:e?l(?:ine)?w)', 0.0))
+    dbg(3, "| xyz: cmap=%s dotsize=%s edgecolor=%s: scatter..." %
+        (cmapstr, dotsize, ec))
+    plt.scatter(x, y, s=dotareas,       # X, Y, size
+                c=z, alpha=alpha,       # color & alpha
+                marker=('o' if mode in 'h' else None),
+                cmap=cmap,
+                edgecolors=ec,
+                linewidths=elw,
+                zorder=10)
+    dbg(3, " done\n")
+
+    # plt.imshow(zi, vmin=zmin, vmax=zmax,
+    #           # origin='lower',
+    #           # extent=[xmin, xmax, ymin, ymax],
+    #           cmap=cmap)
+
+    # draw a colorbar
+    dbg(3, "| xyz: colorbar...")
+    plt.colorbar()
+    dbg(3, " done\n")
+
+    # -- It's redundant to specify limits
+    # plt.xlim(xmin, xmax)
+    # plt.ylim(ymin, ymax)
+
+    if mode == 'p':
+        plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xname, yname, zname))
+    else:
+        plt.title(title)
+        plt.xlabel(xname)
+        plt.ylabel(yname)
+
+    dbg(2, "| xyz: plt.show()...")
+    plt.show()
+    dbg(2, " done\n+--- xyz: END!\n")
+
+
+def process_args():
+    xname = None
+    yname = None
+    zname = None
+    datafile = None
+    params = {}
+
+    for arg in sys.argv[1:]:
+        m = re.match('^([^=]+)=(.*)$', arg)
+        if m:
+            pname, pval = m.group(1,2)
+            params[pname] = pval
+            continue
+
+        if os.path.exists(arg):
+            datafile = arg
+            params['datafile'] = arg
+            continue
+
+        if arg == '-':
+            params['datafile'] = '/dev/stdin'
+            continue
+
+        if xname is None:
+            xname = arg
+            params['xname'] = arg
+        elif yname is None:
+            yname = arg
+            params['yname'] = arg
+        elif zname is None:
+            zname = arg
+            params['zname'] = arg
+
+    if 'help' in params:
+        if 's' in params['help']:
+            # styles
+            err("Avaliable styles:\n%s\n" %
+                re.sub(
+                    "(?:u'|',[\n ]?|')", ' ',
+                    pformat(plt.style.available)
+                )
+            )
+        if 'c' in params['help']:
+            err("Avaliable colormaps:\n%s\n" %
+                re.sub(
+                    "(?:u'|',\\n |')", ' ',
+                    pformat(plt.cm.cmap_d.keys())
+                )
+            )
+
+    return params
+
+
+def main():
+    """
+    Display the (X, Y, Z) heatmap from the data
+    """
+    # process command line args
+    params = process_args()
+
+    # Create the chart from the DataFrame according to requested
+    # args (column-selection and visualization params)
+    xyz(params)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
+
