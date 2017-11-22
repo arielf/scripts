@@ -92,8 +92,8 @@ def myusage(msg=None):
         "    x_name y_name z_name can be numeric (0-based indices)\n"
         "    Supported params:\n"
         "\ttitle=<string>       # Set chart title\n"
-        "\tcmap=<string>        # Colormap/colorscheme name (e.g. 'jet_r')\n\n"
-        "\tstyle=<string>       # Style name (e.g. 'seaborn', 'ggplot')\n\n"
+        "\tcmap=<string>        # Colormap/colorscheme name (e.g. 'jet_r')\n"
+        "\tstyle=<string>       # Style name (e.g. 'seaborn', 'ggplot')\n"
         "\t[xyz]min=<float>     # [XYZ]-axis bottom clipping/trimming\n"
         "\t[xyz]max=<float>     # [XYZ]-axis top clipping/trimming\n"
         "\t[xyz]res=<int>       # [XYZ]-axis resolution\n"
@@ -469,16 +469,16 @@ def process_args():
     if 'help' in params:
         if 's' in params['help']:
             # styles
-            err("Avaliable styles:\n%s\n" %
+            err("=== Avaliable styles:\n%s\n\n" %
                 re.sub(
-                    "(?:u'|',[\n ]?|')", ' ',
+                    "(?:u'|[',\n])", '',
                     pformat(plt.style.available)
                 )
             )
         if 'c' in params['help']:
-            err("Avaliable colormaps:\n%s\n" %
+            err("=== Avaliable colormaps:\n%s\n\n" %
                 re.sub(
-                    "(?:u'|',\\n |')", ' ',
+                    "(?:u'|[',\n])", '',
                     pformat(plt.cm.cmap_d.keys())
                 )
             )
