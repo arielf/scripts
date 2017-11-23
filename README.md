@@ -39,11 +39,19 @@ A collection of random useful scripts - ariel faigon
     supported.  For example a color-map parameter, can be
     specified as any of: colormap, cmap, cm  etc.
 
-    Example:
+    Examples:
 
+        # Get a usage summary:
+        xyz
+
+        # Visualize the R 3D volcano data-set:
+        xyz volcano.csv X Y Z
+
+        # Same + modify color-map and color-resolution
         xyz volcano.csv X Y Z cmap=jet zres=20
 
-    The data file volcano.csv is included here for convenience.
+    The data file volcano.csv (credit: Ross Ihaka)
+    is included here for convenience.
 
 ![volcano contour rendering](volcano-contour.png  "volcano contour rendering by the xyz utility")
  
