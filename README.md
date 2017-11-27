@@ -71,7 +71,7 @@ A collection of random useful scripts - ariel faigon
     The following names can be symlinked to the same (xyz) script.
     * If called as 'xyzb' will produce a bubble chart
     * If called as 'xyzs' will produce a scatter plot
-    * If called as 'xyzp' will produce a polar plot (Y dim mapped to angle)
+    * If called as 'xyzp' will produce a polar plot (X-dim mapped to angle)
 
 ### colidx
 
