@@ -26,18 +26,26 @@ A collection of random useful scripts - ariel faigon
     See: https://arielf.github.io/cuts/
     
 ### xyz
-    Python (matplotlib) script to quickly plot 3D numeric data
-    from the command-line.  Needs a *.tsv or *.csv input file,
-    3 names (or 0-based indices) of columns to select from the file,
-    and many options to control the plot.
+    Python (using matplotlib) script to quickly plot 3D numeric data
+    from the command-line.  Expects a *.tsv or *.csv input file, and
+    3 names (or 0-based integer indices) of columns to select from
+    the file and map them to the 3D (X, Y, Z) dimensions.
 
-    The default is to plot a contour map (like a topographical
-    view of the Z dimension vs the X & Y dimensions).
+    Supports many options to control how the plot looks like.
 
-    Emphasis on friendliness, run without arguments for usage.
-    For parameter prefix matches and regexp/abbreviations are
-    supported.  For example a color-map parameter, can be
-    specified as any of: colormap, cmap, cm  etc.
+    Emphasis on friendliness. Order of arguments doesn't matter.
+    Run without arguments for usage.
+
+    The default is to plot a contour map (topographical view)
+    of the Z dimension vs the X & Y dimensions.
+
+    For all options/parameters, prefix matches and regexp/abbreviations
+    are supported.  For example a color-map parameter, can be
+    specified as any of:
+        colormap
+        cmap
+        cm
+    etc.
 
     Examples:
 
@@ -47,8 +55,13 @@ A collection of random useful scripts - ariel faigon
         # Visualize the R 3D volcano data-set:
         xyz volcano.csv X Y Z
 
-        # Same + modify color-map and color-resolution
+        # Same + also modify the color-map & Z-axis color-resolution
         xyz volcano.csv X Y Z cmap=jet zres=20
+
+        # Similar, but use integer indices (0,1,2) for column-selection,
+        # disable grid-lines (gl=0) and countour-lines (cl=0)
+        # increase Z-dimension resolution & add dots where data appears.
+        xyz 0 1 2 volcano.csv dotsize=0.01 zres=100 gr=0 cl=0
 
     The data file volcano.csv (credit: Ross Ihaka)
     is included here for convenience.
