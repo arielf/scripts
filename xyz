@@ -94,6 +94,7 @@ def myusage(msg=None):
         "\ttitle=<string>       # Set chart title\n"
         "\tcmap=<string>        # Colormap/colorscheme name (e.g. 'jet_r')\n"
         "\tstyle=<string>       # Style name (e.g. 'seaborn', 'ggplot')\n"
+        "\t[xyz]label=<string>  # [XYZ]-label (defaults to [xyz]name)\n"
         "\t[xyz]min=<float>     # [XYZ]-axis bottom clipping/trimming\n"
         "\t[xyz]max=<float>     # [XYZ]-axis top clipping/trimming\n"
         "\t[xyz]res=<int>       # [XYZ]-axis resolution\n"
@@ -265,7 +266,11 @@ def xyz(kw):
     # Whether to plot contour lines in contour-plot (alpha)
     contourlines = float(myget(kw, '^(?:cl|con)', 0.5))
 
-    default_title = 'f(%s, %s) -> %s' % (xname, yname, zname)
+    xlab = myget(kw, '^(?:xl)', xname)
+    ylab = myget(kw, '^(?:yl)', yname)
+    zlab = myget(kw, '^(?:zl)', zname)
+
+    default_title = 'f(%s, %s) -> %s' % (xlab, ylab, zlab)
     title = myget(kw, '^(?:ti)', default_title)
 
     xres = int(float(myget(kw, 'xr', 60)))
@@ -422,11 +427,11 @@ def xyz(kw):
     # plt.ylim(ymin, ymax)
 
     if mode == 'p':
-        plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xname, yname, zname))
+        plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xlab, ylab, zlab))
     else:
         plt.title(title)
-        plt.xlabel(xname)
-        plt.ylabel(yname)
+        plt.xlabel(xlab)
+        plt.ylabel(ylab)
 
     dbg(2, "| xyz: plt.show()...")
     plt.show()
