@@ -1,0 +1,82 @@
+#!/usr/bin/perl -w
+# vim: sw=4 ts=4
+#
+# Sort input file by absolute-value of Nth (default 1st) field
+# in descending order. Fields are separated by (default) white-space
+# but the default can be changed via the command line.
+#
+#
+
+#
+# Step 1) read data into memory, convert every line to a pair:
+#           absolute-value-of-1st-field, original-line
+#
+
+my $Separator = ' ';
+my $SortFieldNo = 0;
+
+sub usage() {
+    $0 =~ s{.*/}{};
+    print STDERR "Usage: $0 [SortFieldNo] [Separator] [InputFiles...]
+    Args:
+        SortFieldNo     Any numeric argument (negative counts from end)
+        Separator       Any string that is not an existig file
+        InputFiles...   If empty will read from stdin
+";
+    exit 1;
+}
+
+sub process_args() {
+    my @file_args = ();
+    for my $arg (@ARGV) {
+        if (-e $arg) {
+            # A File argument
+            push(@file_args, $arg);
+            next;
+        }
+        if ($arg =~ /^-?\d+$/) {
+            $SortFieldNo = $arg;
+            next;
+        }
+        if ($arg =~ /^-./) {
+            usage();
+            next;
+        }
+        $Separator = $arg;
+    }
+    @ARGV = @file_args;
+}
+
+#
+# load_lines
+#   Read input lines into memory
+#   Each line is inserted as a pair [sort_value, full_original_line]
+#
+sub load_lines() {
+    while (<>) {
+        my $sort_field_value = (split($Separator, $_))[$SortFieldNo];
+        push(@LinesInMem, [abs($sort_field_value), $_]);
+    }
+}
+
+
+#
+# print_lines
+#   Print original lines in descending order of the absolute value
+#   of the desired field.
+#
+sub print_lines() {
+    print map $_->[1], sort {
+            $b->[0] <=> $a->[0]
+    } @LinesInMem;  
+}
+
+#
+# --- main
+#
+my @LinesInMem = ();
+
+process_args();
+load_lines();
+print_lines();
+

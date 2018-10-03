@@ -100,6 +100,14 @@ A collection of random useful scripts - ariel faigon
     Usage example: summarize word frequency in /etc/passwd:
     $ tr -cs 'A-Za-z' '\012' < /etc/passwd | sorted-count-with-pct
 
+### sort-by-abs
+    Sort data-file(s) descending by absolute value of some field.
+    Can define separator and field-number to sort by.
+
+    Use:
+        sort-by-abs -h
+    for a usage message
+
 ### byte-entropy
     Calculates entropy of a file (or string) object by byte values.
 
