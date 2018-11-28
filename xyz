@@ -85,7 +85,7 @@ def myusage(msg=None):
     err("Usage: %s[sb] [param=value ...] data_file x_name y_name z_name\n\n"
         "    data_file can be *.csv or *tsv\n"
         "    mode is determined by argv[0]:\n"
-        "        xyz:  3D heatmap w/ countours (default)\n"
+        "        xyz:  3D heatmap w/ contours (default)\n"
         "        xyzs: scatter-plot\n"
         "        xyzb: bubble-plot (like scatter, but bigger dots)\n"
         "        xyzp: polar projection (X-dimension is angle (theta))\n"
