@@ -81,6 +81,22 @@ A collection of random useful scripts - ariel faigon
 
         colidx volcano.csv
  
+### mff
+
+    My Find File.
+
+    Basically a wrapper around multiple stages of `locate` and `grep`.
+    Helps find files by name. Especially useful if you only vaguely
+    remember parts of the file name (say "jpe?g" to search for photos,
+    or a name of a person).
+
+    Smart about doing case-insensitive searches, supporting PCRE regexes, and more.
+
+    Examples:
+
+        mff katelin 'jpe?g'
+        mff beatles rubber.soul mp3
+
 ### T
     Handy bi-directional/smart universal time converter
     - If it sees a Unix time_t (integer) - will convert to date
