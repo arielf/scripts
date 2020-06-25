@@ -15,9 +15,18 @@
 my $Separator = ' ';
 my $SortFieldNo = 0;
 
+# Final output order:
+#   a: ascending
+#   d: descending
+#
+my $Order = 'd';
+
 sub usage() {
     $0 =~ s{.*/}{};
-    print STDERR "Usage: $0 [SortFieldNo] [Separator] [InputFiles...]
+    print STDERR "Usage: $0 [options] [SortFieldNo] [Separator] [InputFiles...]
+    Options:
+        -d              Descending order (default)
+        -r | -a         Reverse / ascending order
     Args:
         SortFieldNo     Any numeric argument (negative counts from end)
         Separator       Any string that is not an existig file
@@ -36,6 +45,16 @@ sub process_args() {
         }
         if ($arg =~ /^-?\d+$/) {
             $SortFieldNo = $arg;
+            next;
+        }
+        if ($arg =~ /^-+[ra]$/i) {
+            # reverse order -> ascending
+            $Order = 'a';
+            next;
+        }
+        if ($arg =~ /^-+[d]$/i) {
+            # default order -> descending
+            $Order = 'd';
             next;
         }
         if ($arg =~ /^-./) {
@@ -61,14 +80,27 @@ sub load_lines() {
 
 
 #
-# print_lines
-#   Print original lines in descending order of the absolute value
-#   of the desired field.
+# print_lines_xxx
+#   Print original lines in descending/ascending order
+#   of the absolute value of the desired field.
 #
-sub print_lines() {
+sub print_lines_descending() {
     print map $_->[1], sort {
             $b->[0] <=> $a->[0]
-    } @LinesInMem;  
+    } @LinesInMem;
+}
+sub print_lines_ascending() {
+    print map $_->[1], sort {
+            $a->[0] <=> $b->[0]
+    } @LinesInMem;
+}
+
+sub print_lines() {
+    if ($Order eq 'a') {
+        print_lines_ascending();
+    } else {
+        print_lines_descending();
+    }
 }
 
 #
@@ -79,4 +111,3 @@ my @LinesInMem = ();
 process_args();
 load_lines();
 print_lines();
-
