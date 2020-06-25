@@ -1,0 +1,55 @@
+#!/usr/bin/perl -w
+#
+# mff: my file find
+#
+# Convenient locate+grep sequence wrapper to find files easily
+#
+# Saves the effort of having to type combos like:
+#
+#   locate [options] some_str | grep [options] another_str ...
+#
+# Supports multiple arguments in sequence.
+#
+# args that are have no upper-case are considered case insensitive
+#
+# Supports full PCREs, not just plain-strings
+# (Doesn't force user to specifiy options to interpret as regex)
+#
+sub no_uppercase_arg($) {
+    my $arg = shift;
+    return ($arg !~ /[A-Z]/);
+}
+
+#
+# pipeline_arg($arg)
+#   map argument to a pipeline argument
+#
+sub pipeline_arg($) {
+    my $arg = shift;
+
+    my $to_add;
+
+    if (no_uppercase_arg($arg)) {
+        $to_add = '|grep -Pi';
+    } else {
+        $to_add = '|grep -P';
+    }
+    $to_add .= " '$arg'";
+
+    $to_add;
+}
+
+sub argv_to_pipeline(@) {
+    my $cmd = "locate ''";
+
+    for (@_) {
+        $cmd .= pipeline_arg($_);
+    }
+    $cmd;
+}
+
+
+#
+# --- main
+#
+system(argv_to_pipeline(@ARGV));
