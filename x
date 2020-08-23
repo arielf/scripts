@@ -91,6 +91,7 @@ my $RScript = <<'EOF';
 #!/usr/bin/Rscript
 # --vanilla
 #
+suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(scales))
 suppressPackageStartupMessages(library(ggplot2))
 
@@ -116,7 +117,10 @@ get_columns <- function() {
         col.names <<- c('X', 'Y')
     }
 
-    dat <- read.csv(conn, sep="\t", header=F,
+    eprintf("get_columns: before fread: col.names=(%s) col.types=(%s)\n",
+            col.names, col.types)
+    # dat <- read.csv(conn, sep="\t", header=F,
+    dat <- fread(cmd=cmd, sep="\t", header=F,
                     colClasses=col.types,
                     col.names=col.names)
 
@@ -136,10 +140,10 @@ get_columns <- function() {
         eprintf("header present: col.names=%s\n", col.names)
 
     } else {
-        # convert to numeric
         eprintf("No header: col.names=%s\n", col.names)
     }
 
+    # convert to numeric
     dat <- as.data.frame(sapply(dat, as.numeric))
     colnames(dat) <- col.names
 
@@ -155,7 +159,7 @@ ratio = {ratio}
 W = {width}
 H = W / ratio
 DPI = 200
-FONTSIZE = 12
+FONTSIZE = 9
 MyGray = 'grey50'
 
 title.theme   <- element_text(family="FreeSans", face="bold.italic",
@@ -230,7 +234,7 @@ if (ncol(d) == 1) {
     pearson.str <- sprintf("Pearson correlation: %.8f", pearson)
 
     if (nchar("{title}") == 0) {
-        title <- sprintf('%s vs %s values\n%s', x.lab, y.lab, pearson.str)
+        title <- sprintf('%s vs %s\n%s', x.lab, y.lab, pearson.str)
     } else {
         title <- sprintf('%s\n%s', "{title}", pearson.str)
     }
