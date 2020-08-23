@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 # vim: ts=4 sw=4 expandtab
-# pylint: disable=bad-continuation
+# pylint: disable=invalid-name, global-statement, no-name-in-module
+# pylint: disable=too-many-branches, too-many-statements, too-many-locals
 """
     xyz
     ~~~
@@ -40,6 +41,7 @@ import scipy
 from scipy.ndimage.filters import (gaussian_filter)
 import matplotlib.pyplot as plt
 from matplotlib.mlab import (griddata)
+from matplotlib import rcParams
 
 ARGV0 = os.path.basename(sys.argv[0])
 
@@ -65,13 +67,6 @@ ariel_cdict = {
     'red':  [[0.0, None, 0.6666666666666666], [0.25, 1.0, 1.0],
              [0.48, 1.0, 1.0], [0.52, 1.0, 0.8666666666666667],
              [0.75, 0.0, 0.0], [1.0, 0.0, None]]
-}
-
-MyFont = {
-    'family': 'sans-serif',
-    'sans-serif': ['FreeSans', 'Helvetica', 'Arial'],
-    # 'style': 'bold italic',
-    # 'weight': 'bold',
 }
 
 def err(msg):
@@ -113,8 +108,8 @@ def myusage(msg=None):
         "\tlinewidth=<int>      # Set linewidth in scatter-points/bubbles\n"
         "\tdbg=<int>            # Set debug level\n"
         "\thelp=[sc]            # Help on avail styles & color schemes\n"
-            % ARGV0
-    )
+        % ARGV0)
+
     sys.exit(1)
 
 
@@ -173,37 +168,37 @@ def data2df(datafile, xname, yname, zname, kw):
 
     # Axis range trimming from command-line: [xyz]{min,max}
     val = myget(kw, r'^(?:xm?i?n)$', None)
-    if val != None:
+    if val is not None:
         xmin = float(val)
     else:
         xmin = df[xname].min()
 
     val = myget(kw, r'^(?:xm?a?x)$', None)
-    if val != None:
+    if val is not None:
         xmax = float(val)
     else:
         xmax = df[xname].max()
 
     val = myget(kw, r'^(?:ym?i?n)$', None)
-    if val != None:
+    if val is not None:
         ymin = float(val)
     else:
         ymin = df[yname].min()
 
     val = myget(kw, r'^(?:ym?a?x)$', None)
-    if val != None:
+    if val is not None:
         ymax = float(val)
     else:
         ymax = df[yname].max()
 
     val = myget(kw, r'^(?:zm?i?n)$', None)
-    if val != None:
+    if val is not None:
         zmin = float(val)
     else:
         zmin = df[zname].min()
 
     val = myget(kw, r'^(?:zm?a?x)$', None)
-    if val != None:
+    if val is not None:
         zmax = float(val)
     else:
         zmax = df[zname].max()
@@ -232,7 +227,7 @@ def xyz(kw):
     dbg(1, "+--- xyz: param init...")
 
     global DBG
-    DBG = int(float(myget(kw, r'(?:debug|db)', 0)))
+    DBG = int(float(myget(kw, r'^(?:debug|db|d$)', 0)))
 
     mode = 'h'          # default: heatmap (gridded & interpolated)
     if 'b' in ARGV0:
@@ -242,7 +237,7 @@ def xyz(kw):
     elif 'p' in ARGV0:
         mode = 'p'      # polar projection (X is theta)
 
-    # good style are:
+    # good styles:
     #   ggplot fast dark_background
     #   seaborn-notebook
     #   seaborn-paper
@@ -251,20 +246,22 @@ def xyz(kw):
     wanted_style = myget(kw, r'(?:style|st)', 'seaborn-notebook')
 
     # Create the plot
-    fig = plt.figure()
+    fig, _ = plt.subplots(1)
 
-    fig.register_cmap(name='ariel', data=ariel_cdict)
-    fig.register_cmap(name='a', data=ariel_cdict)   # short alias
+    plt.register_cmap(name='ariel', data=ariel_cdict)
+    plt.register_cmap(name='a', data=ariel_cdict)   # short alias
 
-    fig.style.use(wanted_style)
+    plt.style.use(wanted_style)
 
-    fig.rc('font', **MyFont)
-    fig.rc('grid', c='0.5', ls='-', lw=0.5)     # midgray, line-width
-    fig.rc('lines', c='0.5', lw=0.5, aa=True)   # midgray, line-width
+    rcParams['font.family'] = 'sans-serif'
+    rcParams['font.sans-serif'] = ['Tahoma', 'DejaVu Sans',
+                                   'Lucida Grande', 'Verdana']
+    plt.rc('grid', c='0.5', ls='-', lw=0.5)     # midgray, line-width
+    plt.rc('lines', c='0.5', lw=0.5, aa=True)   # midgray, line-width
 
     # cmapstr = myget(kw, '(?:col|cm)', 'bwr_r')
     cmapstr = myget(kw, r'(?:col|cm)', 'ariel')
-    cmap = fig.cm.get_cmap(cmapstr)
+    cmap = plt.cm.get_cmap(cmapstr)
 
     # grid: whether to add a grid (alpha)
     grid = float(myget(kw, r'(?:gr(?:id)?$)', 0.33))
@@ -339,10 +336,10 @@ def xyz(kw):
 
     dbg(3, "| xyz: (xscale=%s yscale=%s): scale x,y..." % (xscale, yscale))
     if xscale != 'linear':
-        fig.xscale(xscale)
+        plt.xscale(xscale)
         xname = '%s (%s scale)' % (xname, xscale)
     if yscale != 'linear':
-        fig.yscale(yscale)
+        plt.yscale(yscale)
         yname = '%s (%s scale)' % (yname, yscale)
     dbg(3, " done\n")
 
@@ -378,8 +375,8 @@ def xyz(kw):
         # scipy.interpolate.griddata  way
         xi, yi = np.meshgrid(xi, yi)
         zi = scipy.interpolate.griddata((x, y), z,
-            (xi[None, :], yi[:, None]),
-            method='linear')
+                                        (xi[None, :], yi[:, None]),
+                                        method='linear')
     dbg(3, " done\n")
 
     dbg(2, "Z vector (shape=%s) after gridding: %s\n" % (zi.shape, zi))
@@ -393,15 +390,15 @@ def xyz(kw):
     elif mode == 'h':
         # Color fill between contours
         if contourlines:
-            fig.contour(xi, yi, zi, zres, colors='k',
+            plt.contour(xi, yi, zi, zres, colors='k',
                         alpha=contourlines, extend='neither')
-        fig.contourf(xi, yi, zi, zres, cmap=cmap)
+        plt.contourf(xi, yi, zi, zres, cmap=cmap)
         # , vmin=zmin, vmax=zmax)
         # Contour lines
     dbg(3, " done\n")
 
     if grid:
-        fig.grid(alpha=grid)
+        plt.grid(alpha=grid)
 
     # plot data points.
     dotareas = 0.0
@@ -413,7 +410,7 @@ def xyz(kw):
     elw = float(myget(kw, '^(?:e?l(?:ine)?w)', 0.0))
     dbg(3, "| xyz: cmap=%s dotsize=%s edgecolor=%s: scatter..." %
         (cmapstr, dotsize, ec))
-    fig.scatter(x, y, s=dotareas,       # X, Y, size
+    plt.scatter(x, y, s=dotareas,       # X, Y, size
                 c=z, alpha=alpha,       # color & alpha
                 marker=('o' if mode in 'h' else None),
                 cmap=cmap,
@@ -422,29 +419,29 @@ def xyz(kw):
                 zorder=10)
     dbg(3, " done\n")
 
-    # fig.imshow(zi, vmin=zmin, vmax=zmax,
+    # plt.imshow(zi, vmin=zmin, vmax=zmax,
     #           # origin='lower',
     #           # extent=[xmin, xmax, ymin, ymax],
     #           cmap=cmap)
 
     # draw a colorbar
     dbg(3, "| xyz: colorbar...")
-    fig.colorbar()
+    plt.colorbar()
     dbg(3, " done\n")
 
     # -- It's redundant to specify limits
-    # fig.xlim(xmin, xmax)
-    # fig.ylim(ymin, ymax)
+    # plt.xlim(xmin, xmax)
+    # plt.ylim(ymin, ymax)
 
     if mode == 'p':
-        fig.xlabel("theta:%s  radius:%s  color+size:%s" % (xlab, ylab, zlab))
+        plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xlab, ylab, zlab))
     else:
-        fig.title(title, **MyFont)
-        fig.xlabel(xlab, **MyFont)
-        fig.ylabel(ylab, **MyFont)
+        plt.title(title)
+        plt.xlabel(xlab)
+        plt.ylabel(ylab)
 
-    dbg(2, "| xyz: fig.show()...")
-    fig.show()
+    dbg(2, "| xyz: plt.show()...")
+    plt.show()
     dbg(2, " done\n+--- xyz: END!\n")
 
 
