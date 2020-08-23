@@ -159,7 +159,7 @@ FONTSIZE = 12
 MyGray = 'grey50'
 
 title.theme   <- element_text(family="FreeSans", face="bold.italic",
-                            size=FONTSIZE)
+                            size=FONTSIZE, hjust=0.5)
 x.title.theme <- element_text(family="FreeSans", face="bold.italic",
                             size=FONTSIZE, vjust=-0.1)
 y.title.theme <- element_text(family="FreeSans", face="bold.italic",
@@ -198,7 +198,7 @@ if (ncol(d) == 1) {
         geom_density(fill='{fill}', alpha={alpha}, lwd={size},
                      kernel='{kernel}',
                      linetype={linetype},
-                     adjust={adjust}, cut={cut}) +
+                     adjust={adjust}) +
         scale_x_continuous({xlim}) +
         ggtitle(title) +
         xlab(x.lab) +
