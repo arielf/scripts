@@ -69,6 +69,11 @@ ariel_cdict = {
              [0.75, 0.0, 0.0], [1.0, 0.0, None]]
 }
 
+FONT_STYLE = {
+    'weight': 'bold',
+    'style': 'italic',
+}
+
 def err(msg):
     """Print message to stderr"""
     sys.stderr.write(msg)
@@ -253,9 +258,12 @@ def xyz(kw):
 
     plt.style.use(wanted_style)
 
-    rcParams['font.family'] = 'sans-serif'
-    rcParams['font.sans-serif'] = ['Tahoma', 'DejaVu Sans',
-                                   'Lucida Grande', 'Verdana']
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = ['FreeSans', 'DejaVu Sans',
+                                   'Arial', 'Helvetica', 'Verdana']
+
+    plt.rcParams['font.weight'] = rcParams['axes.labelweight'] = 'bold'
+
     plt.rc('grid', c='0.5', ls='-', lw=0.5)     # midgray, line-width
     plt.rc('lines', c='0.5', lw=0.5, aa=True)   # midgray, line-width
 
@@ -436,9 +444,9 @@ def xyz(kw):
     if mode == 'p':
         plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xlab, ylab, zlab))
     else:
-        plt.title(title)
-        plt.xlabel(xlab)
-        plt.ylabel(ylab)
+        plt.title(title, **FONT_STYLE)
+        plt.xlabel(xlab, **FONT_STYLE)
+        plt.ylabel(ylab, **FONT_STYLE)
 
     dbg(2, "| xyz: plt.show()...")
     plt.show()
