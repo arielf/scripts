@@ -104,9 +104,10 @@ col.names <- c('X','Y')
 
 get_columns <- function() {
     cmd <- "{CUTSCMD}"
-    conn <- pipe(cmd)
+    # conn <- pipe(cmd)
 
-    eprintf("get_columns: CUTSCMD: conn <- pipe('%s')\n", cmd)
+    # eprintf("get_columns: CUTSCMD: conn <- pipe('%s')\n", cmd)
+    eprintf("get_columns: CUTSCMD: '%s'\n", cmd)
     # Read the data as character (no conversion) so we can deal
     # with both numeric and non-numeric elements later
     if (progname == "x") {
