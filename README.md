@@ -220,27 +220,33 @@ I go to a browser tab and it says (e.g. for Firefox):
 I take notice of which site was misbehaving (based on its title)
 and the browser allows me (presenting a big button) to:
 ```
-    ["Restore This Tab"]
+    [Restore This Tab]
 ```
 if I want to, so nothing is actually lost.
 
 You can add more rules to the script to cover more apps that
 may be hogging your CPU when you don't want them to. Just look
-at the 'main' section (last few lines of the script) and add more rules
-as needed. Each rule looks like this:
+at the 'main' section (last few lines of the script) and add
+more rules as needed. Each rule looks like this:
 ```
-process_list '<some pattern>' | terminate-hogs
+    process_list '<some pattern>' | terminate-hogs
 ```
 
 For example, the Firefox rule which only kills one tab is:
 ```
-process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
+    process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
 ```
 
 And for Chrome/chromium it is:
 ```
-process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
+    process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
 ```
 
-I've seen (very rare) cases where even KDE `plasma` had was spinning
-at 100% in some add-on, so there's a rule for that as well. YMMV.
+I've seen (rare) cases where even KDE `plasma` was spinning
+at 100% due to some bad widget/add-on, so there's a rule for that as well.
+YMMV.
+
+To restart a terminated plasma shell, simply run:
+```
+    kstart5 plasmashell
+```

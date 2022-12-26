@@ -47,4 +47,11 @@ function terminate-hogs() {
 process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
 process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
 process_list '[/]signal-desktop --type' | terminate-hogs
+
+# Seen cases of KDE `plasma` spinning at 100% due to some bad widget/add-on,
+# so add a rule for this as well.
+#
+# To restart a terminated plasma shell, just run:
+#    kstart5 plasmashell
+#
 process_list '[/]plasmashell' | terminate-hogs
