@@ -80,7 +80,7 @@ plt.register_cmap(name='ariel', cmap=ariel_cmap)
 plt.register_cmap(name='a', cmap=ariel_cmap)   # short alias
 
 MyFont = {
-    'family': ['Bitstream Vera Sans', 'FreeSans', 'Helvetica', 'Arial'],
+    'family': ['Bitstream Vera Sans', 'FreeSans', 'Arial'],
     # 'weight': 'bold',   # works, but looks ugly
     'weight': 'medium',
 }
@@ -256,7 +256,7 @@ def xyz(kw):
     #   seaborn-paper
     #   seaborn-bright
     #   seaborn-darkgrid
-    wanted_style = myget(kw, '(?:style|st)', 'seaborn-notebook')
+    wanted_style = myget(kw, '(?:style|st)', 'ggplot')
     plt.style.use(wanted_style)
 
     plt.rc('font', **MyFont)

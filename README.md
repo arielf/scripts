@@ -187,10 +187,16 @@ To change the default, simply pass `-` or `--` as the 1st argument to `time-by-l
 
 Kill high-CPU hogging processes by command/args patterns.
 
-Buggy (or malicious) 3rd-party javascript code && drive-by scripting
+Buggy (or malicious) 3rd-party javascript code and drive-by scripting
 abuse are often taking our browsers and computing resources hostage.
-A few times I found my desktop running at 100% CPU all night because
-of some misbehaving javascript.
+I used to find my desktop running at 100% CPU all night when I was not
+even noticing, because of some misbehaving javascript.
+
+This might be caused by an infected ad, badly written code,
+someone abusing your CPU to run crypto-mining, or worse.
+It makes you pay for electricity you don't want to, and multiplied
+by many desktops and browsers left running at night, is very bad
+for our planet.
 
 A simple script which I run from periodically during the night from
 cron like this:
@@ -199,15 +205,32 @@ cron like this:
     */13 0-7 * * *  ~/bin/cpu-hog-killer
 ```
 
-It identifies CPU hogs, mainly inside chrome or firefox, and kills them
-upon detection.
+It identifies CPU hogs, mainly inside Chrome or Firefox, and kills
+them instantly upon detection.
 
 In the morning when I'm back, the worst case scenario is that
 I go to a browser tab and it says: "Aw this tab has crashed"
-I take notice (which site was misbehaving?) and the browser allows me
-to restart it.
+I take notice (of which site was misbehaving based on its title)
+and the browser allows me to restart it if I want to,
+so nothing is actually lost.
 
 You can add more rules to the script to cover more apps that
 may be hogging your CPU when you don't want them to. Just look
 at the 'main' section (last few lines of the script) and add more rules
-as needed.
+as needed. Each rule looks like this:
+```
+process_list '<some pattern>' | terminate-hogs
+```
+
+For example, the Firefox rule which only kills one tab is:
+```
+process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
+```
+
+And for Chrome/chromium it is:
+```
+process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
+```
+
+I've seen (ver rare) cases where even KDE `plasma` had was spinning
+at 100% in some add-on, so there's a rule for that as well. YMMV.
