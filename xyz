@@ -45,7 +45,7 @@ import pandas as pd     # type: ignore
 
 import scipy
 import scipy.interpolate
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
@@ -81,7 +81,7 @@ plt.register_cmap(name='a', cmap=ariel_cmap)   # short alias
 
 MyFont = {
     'family': ['Bitstream Vera Sans', 'FreeSans', 'Helvetica', 'Arial'],
-    # 'weight': 'bold',   # works, butlooks ugly    
+    # 'weight': 'bold',   # works, but looks ugly
     'weight': 'medium',
 }
 
@@ -95,7 +95,7 @@ def myusage(msg=None):
     if msg:
         err(msg)
 
-    err("Usage: %s[sb] [param=value ...] data_file x_name y_name z_name\n\n"
+    err(f"Usage: {ARGV0}[sb] [param=value ...] data_file x_name y_name z_name\n\n"
         "    data_file can be *.csv or *tsv\n"
         "    If data_file is '-' read data from stdin\n"
         "    mode is determined by argv[0]:\n"
@@ -123,8 +123,7 @@ def myusage(msg=None):
         "\tedgecolor=<color>    # Add edge to scatter-points/bubbles\n"
         "\tlinewidth=<int>      # Set linewidth in scatter-points/bubbles\n"
         "\tdbg=<int>            # Set debug level\n"
-        "\thelp=[sc]            # Help on avail styles & color schemes\n"
-        % ARGV0)
+        "\thelp=[sc]            # Help on avail styles & color schemes\n")
 
     sys.exit(1)
 
@@ -146,8 +145,8 @@ def myget(dat, pat, default_value):
     match_keys = [k for k in dat if re.match(pat, k)]
     if len(match_keys) >= 1:
         if len(match_keys) > 1:
-            err("multiple matches for '%s': %s (using 1st match)\n" %
-                (pat, match_keys))
+            err(f"multiple matches for pat:'{pat}': "
+                f"({match_keys}): using 1st match only\n")
         return dat[match_keys[0]]
 
     # nothing worked, use the default value
@@ -159,9 +158,9 @@ def data2df(datafile, xname, yname, zname, kw):
     Select only the wanted/needed columns
     Return as DataFrame
     """
-    dbg(1, "| data2df: read_csv(%s)..." % datafile)
+    dbg(1, f"| data2df: read_csv({datafile})...")
     df = pd.read_csv(datafile, sep='[\t,]', engine='python')
-    dbg(1, " done: df.shape: %s\n" % str(df.shape))
+    dbg(1, f" done: df.shape: {df.shape}\n")
 
     # X, Y, X columns: by either by name or by integer index
     if re.match(r'^\d+$', xname):
@@ -281,7 +280,7 @@ def xyz(kw):
     ylab = myget(kw, '^(?:yl)', yname)
     zlab = myget(kw, '^(?:zl)', zname)
 
-    default_title = 'f(%s, %s) -> %s' % (xlab, ylab, zlab)
+    default_title = f'f({xlab}, {ylab}) -> {zlab}'
     title = myget(kw, '^(?:ti)', default_title)
 
     xres = int(float(myget(kw, 'xr', 60)))
@@ -321,15 +320,15 @@ def xyz(kw):
 
     if xcs:
         x = np.cumsum(x)
-        xname = 'cumsum(%s)' % xname
+        xname = f'cumsum({xname})'
     if ycs:
         y = np.cumsum(y)
-        yname = 'cumsum(%s)' % yname
+        yname = f'cumsum({yname})' % yname
     if zcs:
         z = np.cumsum(z)
-        zname = 'cumsum(%s)' % zname
+        zname = f'cumsum({zname})'
 
-    dbg(3, "| xyz: [xyz]blur=(%s,%s,%s): blur x,y,z..." % (xblur, yblur, zblur))
+    dbg(3, f"| xyz: [xyz]blur=({xblur},{yblur},{zblur}): blur x,y,z...")
     if xblur:
         x = gaussian_filter(x, sigma=xblur, order=0)
     if yblur:
@@ -338,13 +337,13 @@ def xyz(kw):
         z = gaussian_filter(z, sigma=zblur, order=0)
     dbg(3, " done\n")
 
-    dbg(3, "| xyz: (xscale=%s yscale=%s): scale x,y..." % (xscale, yscale))
+    dbg(3, f"| xyz: (xscale={xscale} yscale={yscale}): scale x,y...")
     if xscale != 'linear':
         plt.xscale(xscale)
-        xname = '%s (%s scale)' % (xname, xscale)
+        xname = f'{xname} ({xscale} scale)'
     if yscale != 'linear':
         plt.yscale(yscale)
-        yname = '%s (%s scale)' % (yname, yscale)
+        yname = f'{yname} ({yscale} scale)'
     dbg(3, " done\n")
 
     # point/dot size multiplier (for scatter-plot)
@@ -356,34 +355,24 @@ def xyz(kw):
     }
     dotsize = float(myget(kw, '(?:(?:dot|point|d|p)s)', default_dotsize[mode]))
 
-    dbg(1, "Data Ranges: X:[%s %s] Y:[%s %s]  Z:[%s %s]\n" %
-        (xmin, xmax, ymin, ymax, zmin, zmax))
-    dbg(1, "Data resolutions: X:%s Y:%s Z:%s\n" % (xres, yres, zres))
+    dbg(1, "Data Ranges: "
+           f"X:[{xmin} {xmax}] Y:[{ymin} {ymax}]  Z:[{zmin} {zmax}]\n")
+    dbg(1, f"Data resolutions: X:{xres} Y:{yres} Z:{zres}\n")
 
 
     # define grid.
     xi = np.linspace(xmin, xmax, xres)
     yi = np.linspace(ymin, ymax, yres)
 
-    dbg(2, "xi vector (shape=%s) after linspace: %s\n" % (xi.shape, xi))
-    dbg(2, "yi vector (shape=%s) after linspace: %s\n" % (yi.shape, yi))
+    dbg(2, f"xi vector (shape={xi.shape}) after linspace: {xi}\n")
+    dbg(2, f"yi vector (shape={yi.shape}) after linspace: {yi}\n")
 
     # grid the data.
-    dbg(3, "| xyz: gd=%s: grid x,y -> zi..." % gd)
-    # if gd:
-    #    # deprecated: matplotlib.mlab.griddata  way:
-    #    xi, yi = np.meshgrid(xi, yi)
-    #    # rbf = scipy.interpolate.Rbf(x, y, z, function='linear')
-    #    zi = griddata(x, y, z, xi, yi, interp='linear')
-    # else:
-    # scipy.interpolate.griddata  way
-    # xi, yi = np.meshgrid(xi, yi)
+    dbg(3, f"| xyz: gd={gd}: grid x,y -> zi...")
     zi = scipy.interpolate.griddata((x, y), z,
                                     (xi[None, :], yi[:, None]),
                                     method='linear')
-    dbg(3, " done\n")
-
-    dbg(2, "Z vector after gridding: %s\n" % zi)
+    dbg(3, f"Z vector after gridding: {zi}\n")
 
     dbg(3, "| xyz: contour...")
     if mode == 'p':
@@ -412,8 +401,8 @@ def xyz(kw):
     # scatter/bubble point edge color
     ec = myget(kw, '^(?:e(?:dge)?c)', None)
     elw = float(myget(kw, '^(?:e?l(?:ine)?w)', 0.0))
-    dbg(3, "| xyz: cmap=%s dotsize=%s edgecolor=%s: scatter..." %
-        (cmapstr, dotsize, ec))
+    dbg(3,
+        f"| xyz: cmap={cmapstr} dotsize={dotsize} edgecolor={ec}: scatter...")
     plt.scatter(x, y, s=dotareas,       # X, Y, size
                 c=z, alpha=alpha,       # color & alpha
                 marker=('o' if mode in 'h' else None),
@@ -423,22 +412,22 @@ def xyz(kw):
                 zorder=10)
     dbg(3, " done\n")
 
-    # plt.imshow(zi, vmin=zmin, vmax=zmax,
-    #           # origin='lower',
-    #           # extent=[xmin, xmax, ymin, ymax],
-    #           cmap=cmap)
+    # Axis flipping
+    if 'yinv' in kw:
+        ymin, ymax = ymax, ymin
+    if 'xinv' in kw:
+        xmin, xmax = xmax, xmin
+
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
 
     # draw a colorbar
     dbg(3, "| xyz: colorbar...")
-    plt.colorbar()
+    plt.colorbar(alpha=1.0)
     dbg(3, " done\n")
 
-    # -- It's redundant to specify limits
-    # plt.xlim(xmin, xmax)
-    # plt.ylim(ymin, ymax)
-
     if mode == 'p':
-        plt.xlabel("theta:%s  radius:%s  color+size:%s" % (xlab, ylab, zlab))
+        plt.xlabel(f"theta:{xlab}  radius:{ylab}  color+size:{zlab}")
     else:
         plt.title(title, **MyFont)
         plt.xlabel(xlab, **MyFont)
