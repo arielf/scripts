@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Kill CPU hogging processes (mainly for browser tabs, but can be anything)
 # prevents 3rd party JS abuse, conserve energy, and help saving the planet.
 #
+set -aue
 
 #
 # Adjust these to taste:
@@ -14,7 +15,7 @@ MAX_CPU_PCT=3
 
 PS_FIELDS='pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
 
-function process_list() {
+function process-list() {
     /bin/ps -A -o "$PS_FIELDS" | grep -Pi -- "$1"
 }
 
@@ -44,9 +45,9 @@ function terminate-hogs() {
 #    just get the regex for the process from:
 #       ps -A -o 'pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
 #
-process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
-process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
-process_list '[/]signal-desktop --type' | terminate-hogs
+process-list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
+process-list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
+process-list '[/]signal-desktop --type' | terminate-hogs
 
 # Seen cases of KDE `plasma` spinning at 100% due to some bad widget/add-on,
 # so add a rule for this as well.
@@ -54,4 +55,4 @@ process_list '[/]signal-desktop --type' | terminate-hogs
 # To restart a terminated plasma shell, just run:
 #    kstart5 plasmashell
 #
-process_list '[/]plasmashell' | terminate-hogs
+process-list '[/]plasmashell' | terminate-hogs
