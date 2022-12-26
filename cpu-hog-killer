@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Kill CPU hogging processes (mainly for browser tabs, but can be anything)
-# prevents 3rd party JS abuse, conserve energy, and help saving the planet.
+# Kill CPU hogging processes (mainly for browser tabs, but can be anything).
+# Prevents 3rd party JS abuse, conserves energy, and helps saving the planet.
 #
 set -aue
 
