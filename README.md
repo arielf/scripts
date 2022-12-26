@@ -212,9 +212,13 @@ It identifies CPU hogging processes, mainly inside Chrome or Firefox,
 and kills them instantly upon detection.
 
 In the morning when I'm back, the worst case scenario is that
-I go to a browser tab and it says: "Aw this tab has crashed"
+I go to a browser tab and it says (e.g. for Firefox):
+```
+    "Gah. Your tab just crashed."
+```
+
 I take notice (of which site was misbehaving based on its title)
-and the browser allows me to restart it if I want to,
+and the browser allows me to \["Restore This Tab"\] if I want to,
 so nothing is actually lost.
 
 You can add more rules to the script to cover more apps that
