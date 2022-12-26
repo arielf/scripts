@@ -6,10 +6,10 @@ A collection of random useful scripts - ariel faigon
 ### xy (just a link to x, they are both the same program)
     Handy plotting command line utilities.
     Note: requires 'cuts'
-    
+
     x  plots a density chart of a uni-dimensional numeric vector
     xy plots a scatter-plot of two numeric columns (x, y)
-    
+
     Documentation (man page style) is included, to get it, run:
 
        $ perldoc x
@@ -24,7 +24,7 @@ A collection of random useful scripts - ariel faigon
 ### cuts
     Handy cut and paste of columns (more powerful than 'cut')
     See: https://arielf.github.io/cuts/
-    
+
 ### xyz
     Python (using matplotlib) script to quickly plot 3D numeric data
     from the command-line.  Expects a *.tsv or *.csv input file, and
@@ -67,7 +67,7 @@ A collection of random useful scripts - ariel faigon
     is included here for convenience.
 
 ![volcano contour rendering](volcano-contour.png  "volcano contour rendering by the xyz utility")
- 
+
     The following names can be symlinked to the same (xyz) script.
     * If called as 'xyzb' will produce a bubble chart
     * If called as 'xyzs' will produce a scatter plot
@@ -80,7 +80,7 @@ A collection of random useful scripts - ariel faigon
     Example:
 
         colidx volcano.csv
- 
+
 ### mff
 
     My Find File.
@@ -183,3 +183,31 @@ To change the default, simply pass `-` or `--` as the 1st argument to `time-by-l
     make test |& time-by-line --
 ```
 
+### cpu-hog-killer
+
+Kill high-CPU hogging processes by command/args patterns.
+
+Buggy (or malicious) 3rd-party javascript code && drive-by scripting
+abuse are often taking our browsers and computing resources hostage.
+A few times I found my desktop running at 100% CPU all night because
+of some misbehaving javascript.
+
+A simple script which I run from periodically during the night from
+cron like this:
+```
+    # Add this line (or similar) in 'crontab -e'
+    */13 0-7 * * *  ~/bin/cpu-hog-killer
+```
+
+It identifies CPU hogs, mainly inside chrome or firefox, and kills them
+upon detection.
+
+In the morning when I'm back, the worst case scenario is that
+I go to a browser tab and it says: "Aw this tab has crashed"
+I take notice (which site was misbehaving?) and the browser allows me
+to restart it.
+
+You can add more rules to the script to cover more apps that
+may be hogging your CPU when you don't want them to. Just look
+at the 'main' section (last few lines of the script) and add more rules
+as needed.

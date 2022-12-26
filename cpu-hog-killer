@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Kill CPU hogging processes (mainly for browser tabs, but can be anything)
+# prevents 3rd party JS abuse, conserve energy, and help saving the planet.
+#
+
+#
+# Adjust these to taste:
+#   How many total cumulative seconds of CPU to tolerate?
+#   How much current %CPU to tolerate?
+#
+MAX_CPU_SECS=1200
+MAX_CPU_PCT=3
+
+PS_FIELDS='pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
+
+function process_list() {
+    /bin/ps -A -o "$PS_FIELDS" | grep -Pi -- "$1"
+}
+
+function terminate-hogs() {
+    perl -wne '
+	# Read the process data, one line at a time
+	my $MAX_CPU_SECS = '"$MAX_CPU_SECS"';
+	my $MAX_CPU_PCT   = '"$MAX_CPU_PCT"';
+
+	s/^\s+//;   # small PIDs are space padded
+
+	my ($pid, $ppid, $user, $pri, $cpu, $mem, $time) = split(" ");
+	my ($hh, $mm, $ss) = split(/\D+/, $time);
+	my $cpu_secs = 3600*$hh + 60*$mm + $ss;
+	next if ($cpu_secs < $MAX_CPU_SECS);   # Not a CPU hog, skip
+	next if ($cpu < $MAX_CPU_PCT);          # Not a CPU hog, skip
+
+	# If we get here, we found a CPU hogging process tab
+        print "Killing CPU hogging process (Secs: $cpu_secs, %CPU: $cpu):\n$_";
+	kill "TERM", $pid;
+	# sleep 3;    # give FF time to handle the signal
+    '
+}
+
+#
+# -- main: add rules as needed
+#    just get the regex for the process from:
+#       ps -A -o 'pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
+#
+process_list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
+process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
+process_list '[/]signal-desktop --type' | terminate-hogs
+process_list '[/]plasmashell' | terminate-hogs
