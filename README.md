@@ -232,5 +232,5 @@ And for Chrome/chromium it is:
 process_list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
 ```
 
-I've seen (ver rare) cases where even KDE `plasma` had was spinning
+I've seen (very rare) cases where even KDE `plasma` had was spinning
 at 100% in some add-on, so there's a rule for that as well. YMMV.
