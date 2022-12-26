@@ -19,31 +19,38 @@ function process-list() {
     /bin/ps -A -o "$PS_FIELDS" | grep -Pi -- "$1"
 }
 
+# Allow overriding (CPU max-seconds, CPU max-%pct), use defaults when missing.
+# shellcheck disable=SC2120
 function terminate-hogs() {
+    local max_cpu_secs="${1:-$MAX_CPU_SECS}"
+    local max_cpu_pct="${2:-$MAX_CPU_PCT}"
+
     perl -wne '
 	# Read the process data, one line at a time
-	my $MAX_CPU_SECS = '"$MAX_CPU_SECS"';
-	my $MAX_CPU_PCT   = '"$MAX_CPU_PCT"';
+	my $max_cpu_secs = '"$max_cpu_secs"';
+	my $max_cpu_pct   = '"$max_cpu_pct"';
 
 	s/^\s+//;   # small PIDs are space padded
 
 	my ($pid, $ppid, $user, $pri, $cpu, $mem, $time) = split(" ");
 	my ($hh, $mm, $ss) = split(/\D+/, $time);
 	my $cpu_secs = 3600*$hh + 60*$mm + $ss;
-	next if ($cpu_secs < $MAX_CPU_SECS);    # Not a CPU hog, skip
-	next if ($cpu < $MAX_CPU_PCT);          # Not a CPU hog, skip
+	next if ($cpu_secs < $max_cpu_secs);    # Not a CPU hog, skip
+	next if ($cpu < $max_cpu_pct);          # Not a CPU hog, skip
 
 	# If we get here, we found a CPU hogging process tab
         print "Killing CPU hogging process (Secs: $cpu_secs, %CPU: $cpu):\n$_";
 	kill "TERM", $pid;
-	# sleep 3;    # give FF time to handle the signal
     '
 }
 
 #
 # -- main: add rules as needed
-#    just get the regex for the process from:
-#       ps -A -o 'pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
+#    (1) Get the regex for the process from:
+#           ps -A -o 'pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
+#    (2) You may also override the terminate-hogs CPU consumption
+#        parameters (CPU maxsecs, CPU %maxpct) by adding them at the end, e.g:
+#           terminate-hogs 1200 3
 #
 process-list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
 process-list '[/]chrom(e|ium) --type=(renderer|utility)' | terminate-hogs
