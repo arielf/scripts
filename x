@@ -29,7 +29,7 @@ my $Progname = basename($0);
 #       varname=newvalue
 #
 #
-my %Params = (
+our %Params = (
     # Add supported args as needed:
 
     # -- Chart size and aspect ratio
@@ -42,7 +42,7 @@ my %Params = (
     'ylab'      => 'Y',
 
     # -- Aesthetics
-    'alpha'     => ($Progname eq 'x' ? 0.5 : 0.3),
+    'alpha'     => ($Progname eq 'x' ? 0.7 : 0.5),
     'color'     => ($Progname eq 'x' ? '#0000ff' : '#0055ff'),
     'fill'      => '#3377ff',
     'shape'     => ($Progname eq 'x' ? 20 : 21),
@@ -56,7 +56,7 @@ my %Params = (
     #
     # Options for kernel (used in 'x' density) are:
     #   "gaussian", "rectangular", "triangular", "epanechnikov",
-    #   "biweight", "cosine" or "optcosine" 
+    #   "biweight", "cosine" or "optcosine"
     # http://www.inside-r.org/r-doc/stats/density
     #
     'kernel'    => 'gaussian',
@@ -230,14 +230,17 @@ if (ncol(d) == 1) {
         y.lab <- "{ylab}"
     }
 
-    pearson <- as.numeric(cor(d[[1]], d[[2]]))
-    eprintf("Pearson Correlation: %.8f\n", pearson)
-    pearson.str <- sprintf("Pearson correlation: %.8f", pearson)
-
+    # Add pearson unless disabled with perason='n'
+    pearson.str <- ''
+    if ("{pearson}" == '') {
+        pearson <- as.numeric(cor(d[[1]], d[[2]]))
+        eprintf("Pearson Correlation: %.8f\n", pearson)
+        pearson.str <- sprintf("\nPearson correlation: %.8f", pearson)
+    }
     if (nchar("{title}") == 0) {
-        title <- sprintf('%s vs %s\n%s', x.lab, y.lab, pearson.str)
+        title <- sprintf('%s vs %s%s', x.lab, y.lab, pearson.str)
     } else {
-        title <- sprintf('%s\n%s', "{title}", pearson.str)
+        title <- sprintf('%s%s', "{title}", pearson.str)
     }
 
     g <- ggplot(data=d, aes(x=d[,1], y=d[,2])) +
@@ -298,6 +301,7 @@ sub usage(@) {
         -s scriptfile   Save script to scriptfile and exit (for debug)
         -o pngfile      Save chart to pngfile
         -n              Don't display chart
+        -p              Don't add pearson correlation in XY chart
 
     var=value...
         Optional list of settings to modify the visuals (size, color, etc.)
@@ -563,7 +567,7 @@ you override default parameters and variables.
 
 The config file is eval'ed in perl just after reading the options.
 The option -c disables reading of the config file.
- 
+
 =head1 SEE ALSO
 
 cuts, R, ggplot2
