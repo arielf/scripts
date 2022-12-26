@@ -6,11 +6,11 @@
 set -aue
 
 #
-# Adjust these to taste:
+# Adjust these _default_ values to taste:
 #   How many total cumulative seconds of CPU to tolerate?
 #   How much current %CPU to tolerate?
 #
-MAX_CPU_SECS=1200
+MAX_CPU_SECS=900
 MAX_CPU_PCT=3
 
 PS_FIELDS='pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
@@ -19,9 +19,10 @@ function process-list() {
     /bin/ps -A -o "$PS_FIELDS" | grep -Pi -- "$1"
 }
 
-# Allow overriding (CPU max-seconds, CPU max-%pct), use defaults when missing.
 # shellcheck disable=SC2120
 function terminate-hogs() {
+    # Allow overriding (CPU max-seconds, CPU max-%pct)
+    # (use default values when missing)
     local max_cpu_secs="${1:-$MAX_CPU_SECS}"
     local max_cpu_pct="${2:-$MAX_CPU_PCT}"
 
@@ -45,11 +46,13 @@ function terminate-hogs() {
 }
 
 #
-# -- main: add rules as needed
-#    (1) Get the regex for the process from:
+# -- main (add rules as needed)
+#
+#    (1) Pass the regex to look for processes in this list:
 #           ps -A -o 'pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
-#    (2) You may also override the terminate-hogs CPU consumption
-#        parameters (CPU maxsecs, CPU %maxpct) by adding them at the end, e.g:
+#    (2) You may also override the 'terminate-hogs' CPU consumption
+#        parameters (CPU max-secs, CPU %max-pct) by adding them at the end
+#        e.g:
 #           terminate-hogs 1200 3
 #
 process-list '[/]firefox -contentproc -childID.*tab$' | terminate-hogs
