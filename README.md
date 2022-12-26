@@ -217,9 +217,12 @@ I go to a browser tab and it says (e.g. for Firefox):
     "Gah. Your tab just crashed."
 ```
 
-I take notice (of which site was misbehaving based on its title)
-and the browser allows me to \["Restore This Tab"\] if I want to,
-so nothing is actually lost.
+I take notice of which site was misbehaving (based on its title)
+and the browser allows me (presenting a big button) to:
+```
+    ["Restore This Tab"]
+```
+if I want to, so nothing is actually lost.
 
 You can add more rules to the script to cover more apps that
 may be hogging your CPU when you don't want them to. Just look
