@@ -185,7 +185,7 @@ To change the default, simply pass `-` or `--` as the 1st argument to `time-by-l
 
 ### cpu-hog-killer
 
-Kill high-CPU hogging processes by command/args patterns.
+Kill high-CPU hogging processes by command+args regex & CPU consumption.
 
 Buggy (or malicious) 3rd-party javascript code is often taking
 our browsers and computing resources hostage.
