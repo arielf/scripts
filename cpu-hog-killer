@@ -29,7 +29,7 @@ function terminate-hogs() {
 	my ($pid, $ppid, $user, $pri, $cpu, $mem, $time) = split(" ");
 	my ($hh, $mm, $ss) = split(/\D+/, $time);
 	my $cpu_secs = 3600*$hh + 60*$mm + $ss;
-	next if ($cpu_secs < $MAX_CPU_SECS);   # Not a CPU hog, skip
+	next if ($cpu_secs < $MAX_CPU_SECS);    # Not a CPU hog, skip
 	next if ($cpu < $MAX_CPU_PCT);          # Not a CPU hog, skip
 
 	# If we get here, we found a CPU hogging process tab
