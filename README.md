@@ -187,26 +187,29 @@ To change the default, simply pass `-` or `--` as the 1st argument to `time-by-l
 
 Kill high-CPU hogging processes by command/args patterns.
 
-Buggy (or malicious) 3rd-party javascript code and drive-by scripting
-abuse are often taking our browsers and computing resources hostage.
-I used to find my desktop running at 100% CPU all night when I was not
-even noticing, because of some misbehaving javascript.
+Buggy (or malicious) 3rd-party javascript code is often taking
+our browsers and computing resources hostage.
 
-This might be caused by an infected ad, badly written code,
-someone abusing your CPU to run crypto-mining, or worse.
+I used to find some processes on my desktop running at 100% CPU
+all night when I was not even noticing, because of bad javascript.
+
+Involuntary CPU hogging might be caused by an infected ad,
+badly written code, "drive-by-scripting" leading to someone
+co-opting your computer to run crypto-mining, or much worse.
+
 It makes you pay for electricity you don't want to, and multiplied
-by many desktops and browsers left running at night, is very bad
+by many desktops and browsers left running at night, is also very bad
 for our planet.
 
-A simple script which I run from periodically during the night from
-cron like this:
+`cpu-hog-killer` is a simple script which I run from periodically
+during the night.  I make it from cron every 13 minutes like this:
 ```
-    # Add this line (or similar) in 'crontab -e'
+    # Add this line (or similar) using 'crontab -e'
     */13 0-7 * * *  ~/bin/cpu-hog-killer
 ```
 
-It identifies CPU hogs, mainly inside Chrome or Firefox, and kills
-them instantly upon detection.
+It identifies CPU hogging processes, mainly inside Chrome or Firefox,
+and kills them instantly upon detection.
 
 In the morning when I'm back, the worst case scenario is that
 I go to a browser tab and it says: "Aw this tab has crashed"
