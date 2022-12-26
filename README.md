@@ -202,7 +202,7 @@ by many desktops and browsers left running at night, is also very bad
 for our planet.
 
 `cpu-hog-killer` is a simple script which I run from periodically
-during the night.  I make it from cron every 13 minutes like this:
+during the night.  I make it run from cron every 13 minutes like this:
 ```
     # Add this line (or similar) using 'crontab -e'
     */13 0-7 * * *  ~/bin/cpu-hog-killer
@@ -210,6 +210,9 @@ during the night.  I make it from cron every 13 minutes like this:
 
 It identifies CPU hogging processes, mainly inside Chrome or Firefox,
 and kills them instantly upon detection.
+Note that it doesn't kill processes taking CPU indiscriminately.
+It only kills those processes that you explicitly say you want
+killed based on a detailed regexp + CPU consumption parameters.
 
 In the morning when I'm back, the worst case scenario is that
 I go to a browser tab and it says (e.g. for Firefox):
