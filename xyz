@@ -48,7 +48,7 @@ import scipy.interpolate
 from scipy.ndimage import gaussian_filter
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib import colors
 
 # Don't print stack trace on CTRL-C
 signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
@@ -75,14 +75,17 @@ ariel_cdict = {
              [0.48, 1.0, 1.0], [0.52, 1.0, 0.8666666666666667],
              [0.75, 0.0, 0.0], [1.0, 0.0, None]]
 }
-ariel_cmap = LinearSegmentedColormap('ariel_cmap', ariel_cdict)
-plt.register_cmap(name='ariel', cmap=ariel_cmap)
-plt.register_cmap(name='a', cmap=ariel_cmap)   # short alias
+ariel_cmap = colors.LinearSegmentedColormap('ariel', ariel_cdict)
+plt.colormaps.register(cmap=ariel_cmap)
+# -- Old syntax, matplotlib deprecation warnings
+# plt.register_cmap(name='ariel', cmap=ariel_cmap)
+# plt.register_cmap(name='a', cmap=ariel_cmap)   # short alias
 
 MyFont = {
-    'family': ['Bitstream Vera Sans', 'FreeSans', 'Arial'],
-    # 'weight': 'bold',   # works, but looks ugly
-    'weight': 'medium',
+    'family': ['FreeSans', 'Bitstream Vera Sans', 'Arial'],
+    'weight': 'bold',
+    'style': 'italic',
+    # 'weight': 'medium',
 }
 
 def err(msg):
@@ -224,6 +227,69 @@ def data2df(datafile, xname, yname, zname, kw):
     ]
     return df
 
+def grid_set_style() -> None:
+    """Set our preferred style for the grid"""
+    plt.grid(which='major', linestyle='-',
+             alpha=0.7, color='black', linewidth=0.2)
+    plt.grid(which='minor', linestyle=':',
+             alpha=0.8, color='black', linewidth=0.2)
+
+def my_style_tweaks():
+    """
+    Mostly to make the labels nicer
+    """
+    style_dict = {
+        'font.sans-serif': 'FreeSans',
+        'font.family': 'sans-serif',
+        'font.weight': 'bold',
+        'font.style': 'italic',
+        # 'font.size': 14.0,
+
+        'text.color': 'white',
+
+        'figure.facecolor': '#000',
+
+        'axes.grid': True,
+        'axes.grid.axis': 'both',
+        'axes.grid.which': 'both',
+        'grid.linestyle': '-',
+        'grid.alpha': 1.0,
+        'grid.color': 'black',
+        'grid.linewidth': 0.5,
+
+        'axes.facecolor': 'black',
+        'axes.labelcolor': 'white',
+        'axes.edgecolor': 'white',
+        'axes.linewidth': 1.0,      # external frame around the chart
+        # 'axes.titlesize': 20.0,
+
+        # 'xtick.minor.visible': True,    # matplotlib bug? ghost vertical lines
+        # 'ytick.minor.visible': True,
+
+        'xtick.color': 'white',
+        'ytick.color': 'white',
+
+        # Small little ticks/wicks (not the grid)
+        'xtick.major.size': 4,      # length of tick
+        'ytick.major.size': 4,
+        'xtick.major.width': 2,     # width of tick
+        'ytick.major.width': 2,
+        'xtick.major.pad': 4.0,     # distance of label from end of tick
+        'ytick.major.pad': 4.0,
+
+        # We don't want minor ticks, have to force to 0, or they show up
+        'xtick.minor.size': 0,
+        'ytick.minor.size': 0,
+        'xtick.minor.width': 0,
+        'ytick.minor.width': 0,
+
+        'xtick.labelsize': 14.0,
+        'ytick.labelsize': 14.0,
+
+        'legend.fontsize': 13.0,
+    }
+    plt.rcParams.update(style_dict)
+
 def xyz(kw):
     """
     Plot a heatmap/bubble-chart/scatterplot
@@ -258,14 +324,17 @@ def xyz(kw):
     #   seaborn-darkgrid
     wanted_style = myget(kw, '(?:style|st)', 'ggplot')
     plt.style.use(wanted_style)
+    my_style_tweaks()
 
-    plt.rc('font', **MyFont)
+    # plt.rc('font', **MyFont)
     plt.rc('grid', c='0.5', ls='-', lw=0.5)     # midgray, line-width
     plt.rc('lines', c='0.5', lw=0.5, aa=True)   # midgray, line-width
 
     # cmapstr = myget(kw, '(?:col|cm)', 'bwr_r')
     cmapstr = myget(kw, '(?:col|cm)', 'ariel')
-    cmap = plt.cm.get_cmap(cmapstr)
+    # -- Old syntax, matplotlib deprecation warnings
+    # cmap = plt.cm.get_cmap(cmapstr)
+    cmap = plt.colormaps[cmapstr]
 
     # grid: whether to add a grid (alpha)
     grid = float(myget(kw, '(?:gr(?:id)?$)', 0.33))
@@ -274,7 +343,7 @@ def xyz(kw):
     gd = int(float(myget(kw, '(?:g(ri?d?)?d)', 1)))
 
     # Whether to plot contour lines in contour-plot (alpha)
-    contourlines = float(myget(kw, '^(?:cl|con)', 0.5))
+    contourlines = float(myget(kw, '^(?:cl|con)', 1.0))
 
     xlab = myget(kw, '^(?:xl)', xname)
     ylab = myget(kw, '^(?:yl)', yname)
@@ -288,7 +357,7 @@ def xyz(kw):
     zres = int(float(myget(kw, 'zr', 50)))
 
     # Transparency of bubbles
-    alpha = float(myget(kw, 'al', 0.5))
+    alpha = float(myget(kw, 'al', 1.0))
 
     # PDF => CDF via cumsum
     xcs = int(float(myget(kw, 'xc', 0)))
@@ -390,8 +459,11 @@ def xyz(kw):
         # Contour lines
     dbg(3, " done\n")
 
+    plt.tight_layout(rect=(0.00, 0.0, 1, 1))
+
     if grid:
         plt.grid(alpha=grid)
+        # grid_set_style() # no effect...
 
     # plot data points.
     dotareas = 0.0
@@ -423,15 +495,16 @@ def xyz(kw):
 
     # draw a colorbar
     dbg(3, "| xyz: colorbar...")
+    plt.grid(False)     # quiet MatplotlibDeprecationWarning
     plt.colorbar(alpha=1.0)
     dbg(3, " done\n")
 
     if mode == 'p':
         plt.xlabel(f"theta:{xlab}  radius:{ylab}  color+size:{zlab}")
     else:
-        plt.title(title, **MyFont)
-        plt.xlabel(xlab, **MyFont)
-        plt.ylabel(ylab, **MyFont)
+        plt.title(title, **MyFont, size=22)
+        plt.xlabel(xlab, **MyFont, size=18)
+        plt.ylabel(ylab, **MyFont, size=18)
 
     dbg(2, "| xyz: plt.show()...")
     plt.show()
