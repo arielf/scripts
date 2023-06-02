@@ -11,13 +11,15 @@
 #
 # -- ariel faigon - 2014-07
 #
+# pre-commit-exec-exempt
+#
 use strict;
 use Getopt::Std;
-use File::Basename;
-use File::Temp;
+use File::Basename qw(basename);
+use File::Temp qw(mktemp);
 use Scalar::Util qw(looks_like_number);
 
-use vars qw($opt_v $opt_c $opt_o $opt_s $opt_n);
+use vars qw($opt_v $opt_c $opt_o $opt_s $opt_n $opt_p);
 
 my $Progname = basename($0);
 
@@ -33,7 +35,7 @@ our %Params = (
     # Add supported args as needed:
 
     # -- Chart size and aspect ratio
-    'width'     => 4,   # in inches?
+    'width'     => 5,   # in inches?
     'ratio'     => 1,   # height vs width
 
     # -- Text title and axis-labels
@@ -42,7 +44,7 @@ our %Params = (
     'ylab'      => 'Y',
 
     # -- Aesthetics
-    'alpha'     => ($Progname eq 'x' ? 0.7 : 0.5),
+    'alpha'     => ($Progname eq 'x' ? 0.7 : 0.4),
     'color'     => ($Progname eq 'x' ? '#0000ff' : '#0055ff'),
     'fill'      => '#3377ff',
     'shape'     => ($Progname eq 'x' ? 20 : 21),
@@ -71,10 +73,13 @@ our %Params = (
                         # Use a power-of-2 (due to FFT algo used)
 
     # -- External program to display images
-    'display'   => 'gwenview',
+    'display'   => 'display',
 
     # -- Debug/verbose
     'v'         => 0,
+
+    # -- by default, no Pearson correlation is printed (-p enables)
+    # 'pearson'   => ''
 );
 
 my $ConfigFile = "$ENV{HOME}/.x.pl";
@@ -219,6 +224,9 @@ if (ncol(d) == 1) {
 } else if (ncol(d) == 2) {
     #####  xy
     col.names <- colnames(d)
+    d <- na.omit(d)
+    # number of points _after_ na.omit() trimming
+    N = nrow(d)
     if ("{xlab}" == 'X') {
         x.lab <- col.names[1]
     } else {
@@ -230,12 +238,13 @@ if (ncol(d) == 1) {
         y.lab <- "{ylab}"
     }
 
-    # Add pearson unless disabled with perason='n'
+    # Add pearson iff enabled
     pearson.str <- ''
-    if ("{pearson}" == '') {
+    if (nchar("{pearson}")) {
         pearson <- as.numeric(cor(d[[1]], d[[2]]))
-        eprintf("Pearson Correlation: %.8f\n", pearson)
-        pearson.str <- sprintf("\nPearson correlation: %.8f", pearson)
+        eprintf("Pearson Correlation: %.8f (%d points)\n", pearson, N)
+        pearson.str <- sprintf(
+            "\nPearson correlation: %.8f (%d points)", pearson, N)
     }
     if (nchar("{title}") == 0) {
         title <- sprintf('%s vs %s%s', x.lab, y.lab, pearson.str)
@@ -245,7 +254,7 @@ if (ncol(d) == 1) {
 
     g <- ggplot(data=d, aes(x=d[,1], y=d[,2])) +
         geom_point(
-                    shape=as.factor({shape})
+                    shape=factor({shape})
                     ,colour='{color}'
                     ,alpha=as.numeric({alpha})
                     ,size=as.numeric({size})
@@ -290,9 +299,9 @@ sub v {
 sub usage(@) {
     print STDERR @_, "\n" if @_;
     my $params_help = '';
-    foreach my $k (keys %Params) {
-        my $v = $Params{$k};
-        $params_help .= "\n\t\t$k\t$v";
+    foreach my $key (keys %Params) {
+        my $val = $Params{$key};
+        $params_help .= "\n\t\t$key\t$val";
     }
     die "Usage: $0 [Options] [var=value...] [Column_Specs]...
     Options:
@@ -301,7 +310,7 @@ sub usage(@) {
         -s scriptfile   Save script to scriptfile and exit (for debug)
         -o pngfile      Save chart to pngfile
         -n              Don't display chart
-        -p              Don't add pearson correlation in XY chart
+        -p              Add pearson correlation in XY chart
 
     var=value...
         Optional list of settings to modify the visuals (size, color, etc.)
@@ -333,7 +342,8 @@ sub get_args {
 
     for (my $i = 0; $i < $nargs; $i++) {
         my $arg = $ARGV[$i];
-        if ($arg =~ /^-[vcn]$/) {
+        if ($arg =~ /^-[vcnp]$/) {
+            # Eat our own options so they don't get passed to cuts
             push(@OurArgs, $arg);
             next;
         }
@@ -375,7 +385,7 @@ sub get_args {
     }
 
     @ARGV = @OurArgs;
-    getopts('vns:co:');
+    getopts('vns:co:p');
 
     v("\@CutsArgs = (@CutsArgs)\n");
     if (-e $ConfigFile && ! $opt_c) {
@@ -387,6 +397,7 @@ sub get_args {
     $Params{'progname'} = $Progname;
     $Params{'pngfile'} = $opt_o ? $opt_o : sprintf("/tmp/%s.png", $Progname);
     $Params{'v'} = $opt_v ? 1 : 0;
+    $Params{'pearson'} = $opt_p ? 'y' : '';
 
     if ($Progname eq 'x') {
         $Params{'ylab'} = '';
@@ -397,8 +408,8 @@ sub get_args {
         if ($arg =~ /^(\w+)=(.+)$/) {
             my ($name, $value) = ($1, $2);
             if ($name =~ /^[xy]lim$/) {
-                if ($value !~ /^c\([-+0-9.]+[, ]+[-+0-9.]+\)$/) {
-                    my ($low, $high) = split(/[\s,;:]+/, $value);
+                if ($value =~ /^c?\(?[-+0-9.]+[:;, ]+[-+0-9.]+\)?$/) {
+                    my ($low, $high) = split(/[:;,\s]+/, $value);
                     if ((defined $high) && looks_like_number($high)) {
                         $value = "c($low,$high)";
                     } else {
@@ -406,7 +417,7 @@ sub get_args {
                     }
                 }
                 # Ugly hack: ggplot doesn't like empty 'limits=...'
-                # So we need {xlim} to either have it all name=value
+                # So we need {[xy]lim} to have all name=value assigned
                 # or none
                 $value = "limits=$value";
             }
@@ -437,9 +448,9 @@ sub get_args {
 sub template_2_script($) {
     my $script = shift;
 
-    foreach my $k (keys %Params) {
-        my $v = $Params{$k};
-        $script =~ s/{$k}/$v/g;
+    foreach my $key (keys %Params) {
+        my $val = $Params{$key};
+        $script =~ s/{$key}/$val/g;
     }
     if ($opt_s) {
         open(my $fh, ">$opt_s") || die "$0: can open $opt_s: $!\n";
@@ -521,6 +532,10 @@ from any file:colum_no (argument) or stdin.
     Other options & args (not including VAR=VALUE form vars)
     are passed down to 'cuts' (see cuts) to select data-columns.
 
+=head1 OPTIONS (xy only)
+
+    -p              Add pearson correlation and n-points detail to title
+
 =head1 VAR=VALUE settings
 
     You may pass more arguments of the form:
@@ -540,7 +555,7 @@ from any file:colum_no (argument) or stdin.
                 display gwenview
                 ylab    Y
                 fill    #3377ff
-                alpha   0.5
+                alpha   0.4
                 shape   20
                 color   #0000ff
                 xlab    X
@@ -553,6 +568,10 @@ from any file:colum_no (argument) or stdin.
 
  xy file 3 1        Plot columns 3 (on X axis) and 1 (on Y axis)
                     from file as a scatter-plot
+
+ # reading data from stdin (default) is supported too
+ printf "1 2\n2 4\n5 25\n7 50\n" | \
+     xy -p ratio=1.6 alpha=1 size=5 title='my chart'
 
 =head1 AUTHOR
 
