@@ -46,9 +46,9 @@ our %Params = (
     # -- Aesthetics
     'alpha'     => ($Progname eq 'x' ? 0.7 : 0.4),
     'color'     => ($Progname eq 'x' ? '#0000ff' : '#0055ff'),
-    'fill'      => '#3377ff',
+    'fill'      => ($Progname eq 'x' ? '#3377ff' : '#ffffff'),
     'shape'     => ($Progname eq 'x' ? 20 : 21),
-    'size'      => ($Progname eq 'x' ? 0.3 : 0.7),
+    'size'      => ($Progname eq 'x' ? 0.3 : 0.6),
     'linetype'  => 1,
 
     # -- Data clip boundaries
@@ -251,13 +251,19 @@ if (ncol(d) == 1) {
     } else {
         title <- sprintf('%s%s', "{title}", pearson.str)
     }
+    shape=as.numeric({shape})
+    alpha=as.numeric({alpha})
+    size=as.numeric({size})
+    color='{color}'
+    fill='{fill}'
 
     g <- ggplot(data=d, aes(x=d[,1], y=d[,2])) +
         geom_point(
-                    shape=factor({shape})
-                    ,colour='{color}'
-                    ,alpha=as.numeric({alpha})
-                    ,size=as.numeric({size})
+                    shape=shape,
+                    colour=color,
+                    fill=fill,
+                    alpha=alpha,
+                    size=size
         ) +
         scale_color_identity() +
         scale_alpha(guide='none') +
@@ -596,4 +602,3 @@ cuts, R, ggplot2
 Probably
 
 =cut
-
