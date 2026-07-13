@@ -6,12 +6,12 @@
 set -aue
 
 #
-# Adjust these _default_ values to taste:
+# Pass these from CLI, and/or adjust _default_ values to taste:
 #   How many total cumulative seconds of CPU to tolerate?
 #   How much current %CPU to tolerate?
 #
-MAX_CPU_SECS=900
-MAX_CPU_PCT=3
+MAX_CPU_SECS="${1:-900}"
+MAX_CPU_PCT="${2:-3}"
 
 PS_FIELDS='pid,ppid,user,pri,pcpu,pmem,time,stime,tty,wchan,cmd'
 

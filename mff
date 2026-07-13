@@ -30,9 +30,9 @@ sub pipeline_arg($) {
     my $to_add;
 
     if (no_uppercase_arg($arg)) {
-        $to_add = '|grep -Pi';
+        $to_add = '|grep -Pi --';
     } else {
-        $to_add = '|grep -P';
+        $to_add = '|grep -P --';
     }
     $to_add .= " '$arg'";
 
@@ -40,11 +40,20 @@ sub pipeline_arg($) {
 }
 
 sub argv_to_pipeline(@) {
-    my $cmd = "locate ''";
+    my $cmd;
+    my $arg0 = shift @_;
 
+    if (no_uppercase_arg($arg0)) {
+        $cmd = "locate -ri '$arg0'";
+    } else {
+        $cmd = "locate -r '$arg0'";
+    }
+
+    # add remaining/additional arguments to the pipeline
     for (@_) {
         $cmd .= pipeline_arg($_);
     }
+    #--debug--# print STDERR "Running: $cmd\n";
     $cmd;
 }
 
